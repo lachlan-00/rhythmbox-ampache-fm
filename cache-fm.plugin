@@ -1,0 +1,10 @@
+[Plugin]
+Loader=python3
+Module=cache-fm
+IAge=2
+Depends=rb
+Name=Cache.FM
+Description=Cache playback history locally
+Authors=Lachlan de Waard <lachlan.00@gmail.com>
+Copyright=Copyright © 2017 Lachlan de Waard
+Website=https://github.com/lachlan-00/cache-fm

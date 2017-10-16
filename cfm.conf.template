@@ -1,0 +1,4 @@
+[conf]
+log_path = 
+log_rotate = True
+log_limit = 10760720
