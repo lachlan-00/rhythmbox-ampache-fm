@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""       Copyright (C)2011
+"""       Copyright (C)2017
        Lachlan de Waard <lachlan.00@gmail.com>
        --------------------------------------
        Rhythmbox Cache.FM
@@ -40,7 +40,7 @@ PLUGIN_PATH = 'plugins/cache-fm/'
 CONFIGFILE = 'cfm.conf'
 CONFIGTEMPLATE = 'cfm.conf.template'
 UIFILE = 'config.ui'
-C = "conf"
+C = 'conf'
 
 class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
     __gtype_name__ = 'cache-fm'
@@ -48,8 +48,8 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
 
     def __init__(self):
         GObject.Object.__init__(self)
-        RB.BrowserSource.__init__(self, name=_("cache-fm"))
-        self.plugin_info = "cache-fm"
+        RB.BrowserSource.__init__(self, name=_('cache-fm'))
+        self.plugin_info = 'cache-fm'
         self.conf = configparser.RawConfigParser()
         self.configfile = RB.find_user_data_file(PLUGIN_PATH + CONFIGFILE)
         self.ui_file = RB.find_user_data_file(PLUGIN_PATH + UIFILE)
@@ -81,7 +81,7 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
     # Rhythmbox standard Activate method
     def do_activate(self):
         """ Activate the plugin """
-        print("activating cache-fm")
+        print('activating cache-fm')
         shell = self.object
         self.shell = shell
         self.rbdb = shell.props.db
@@ -97,7 +97,7 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
     # Rhythmbox standard Deactivate method
     def do_deactivate(self):
         """ Deactivate the plugin """
-        print("deactivating cache-fm")
+        print('deactivating cache-fm')
         Gio.Application.get_default()
         # self.app = None
         # self.action = None
@@ -157,8 +157,8 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             shutil.copyfile(template, self.configfile)
             # set default path for the user
             self.conf.read(self.configfile)
-            self.conf.set(C, "log_path", os.path.join(RB.user_cache_dir(), 'cache-fm.txt'))
-            datafile = open(self.configfile, "w")
+            self.conf.set(C, 'log_path', os.path.join(RB.user_cache_dir(), 'cache-fm.txt'))
+            datafile = open(self.configfile, 'w')
             self.conf.write(datafile)
             datafile.close()
         else:
@@ -172,58 +172,60 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         build.add_from_file(self.ui_file)
         self._check_configfile()
         self.conf.read(self.configfile)
-        window = build.get_object("cache-fm")
-        build.get_object("closebutton").connect('clicked',
+        window = build.get_object('cache-fm')
+        build.get_object('closebutton').connect('clicked',
                                                 lambda x:
                                                 window.destroy())
-        build.get_object("savebutton").connect('clicked', lambda x:
+        build.get_object('savebutton').connect('clicked', lambda x:
                                                self.save_config(build))
-        build.get_object("log_path").set_text(self.conf.get(C, "log_path"))
-        build.get_object("log_limit").set_text(self.conf.get(C, "log_limit"))
-        if self.conf.get(C, "log_rotate") == "True":
-            build.get_object("log_rotate").set_active(True)
+        build.get_object('log_path').set_text(self.conf.get(C, 'log_path'))
+        build.get_object('log_limit').set_text(self.conf.get(C, 'log_limit'))
+        if self.conf.get(C, 'log_rotate') == 'True':
+            build.get_object('log_rotate').set_active(True)
         window.show_all()
         return window
 
     def save_config(self, builder):
         """ Save changes to the plugin config """
-        if builder.get_object("log_rotate").get_active():
-            self.conf.set(C, "log_rotate", "True")
+        if builder.get_object('log_rotate').get_active():
+            self.conf.set(C, 'log_rotate', 'True')
         else:
-            self.conf.set(C, "log_rotate", "False")
-        self.conf.set(C, "log_path",
-                      builder.get_object("log_path").get_text())
-        self.conf.set(C, "log_limit",
-                      builder.get_object("log_limit").get_text())
-        datafile = open(self.configfile, "w")
+            self.conf.set(C, 'log_rotate', 'False')
+        self.conf.set(C, 'log_path',
+                      builder.get_object('log_path').get_text())
+        self.conf.set(C, 'log_limit',
+                      builder.get_object('log_limit').get_text())
+        datafile = open(self.configfile, 'w')
         self.conf.write(datafile)
         datafile.close()
 
     def log_processing(self, logmessage):
         """ Perform log operations """
-        log_path = self.conf.get('conf', 'log_path')
-        log_rotate = self.conf.get('conf', 'log_rotate')
-        log_limit = self.conf.get('conf', 'log_limit')
+        self.conf.read(self.configfile)
+        log_path = self.conf.get(C, 'log_path')
+        log_rotate = self.conf.get(C, 'log_rotate')
+        log_limit = self.conf.get(C, 'log_limit')
+        # Fallback cache file to home folder
         if not log_path:
             log_path = os.getenv('HOME') + '/cache-fm.txt'
         print('Writing to' + log_path)
         # Create if missing or over the size limit
         if not os.path.exists(log_path):
-            files = codecs.open(log_path, "w", "utf8")
+            files = codecs.open(log_path, 'w', 'utf8')
             files.close()
         elif os.path.getsize(log_path) >= int(log_limit) and log_rotate == 'True':
             print('rotating large cache file')
             shutil.copyfile(log_path, log_path.replace('.txt', (str(int(time.time())) + '.txt')))
-            files = codecs.open(log_path, "w", "utf8")
+            files = codecs.open(log_path, 'w', 'utf8')
             files.close()
-        files = codecs.open(log_path, "a", "utf8")
+        files = codecs.open(log_path, 'a', 'utf8')
         try:
             logline = [logmessage]
-            files.write((u"".join(logline)) + u"\n")
+            files.write((u''.join(logline)) + u'\n')
         except UnicodeDecodeError:
             print('LOG UNICODE ERROR')
             logline = [logmessage.decode('utf-8')]
-            files.write((u"".join(logline)) + u"\n")
+            files.write((u''.join(logline)) + u'\n')
         files.close()
         return
 
