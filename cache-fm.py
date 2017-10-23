@@ -42,6 +42,7 @@ CONFIGTEMPLATE = 'cfm.conf.template'
 UIFILE = 'config.ui'
 C = 'conf'
 
+
 class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
     __gtype_name__ = 'cache-fm'
     object = GObject.property(type=GObject.Object)
@@ -61,6 +62,7 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         self.queue = None
         self.app = None
         self.playing_changed_id = None
+
         # fields for current track
         self.nowtime = None
         self.nowtitle = None
@@ -69,6 +71,7 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         self.nowMBtitle = None
         self.nowMBartist = None
         self.nowMBalbum = None
+
         # Fields for the last saved track to check against
         self.lasttime = int(time.time())
         self.lasttitle = None
@@ -78,7 +81,6 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         self.lastMBartist = None
         self.lastMBalbum = None
 
-    # Rhythmbox standard Activate method
     def do_activate(self):
         """ Activate the plugin """
         print('activating cache-fm')
@@ -94,13 +96,10 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
                                                       self.playing_changed)
         self._check_configfile()
 
-    # Rhythmbox standard Deactivate method
     def do_deactivate(self):
         """ Deactivate the plugin """
         print('deactivating cache-fm')
         Gio.Application.get_default()
-        # self.app = None
-        # self.action = None
         del self.shell
         del self.rbdb
         del self.db
@@ -111,30 +110,32 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         del self.playing_changed_id
 
     def playing_changed(self, shell_player, playing):
-        """
-        Check whether enough time has passed and that the song is different
-        """
+        """ When playback entry has changed, get the tags and compare """
         entry = self.player.get_playing_entry()
-        #print(dir(RB.RhythmDBPropType))
         if not entry:
             return None, None, None
         self.nowtime = int(time.time())
-        # get tags
+
+        # Get name/string tags
         self.nowtitle = entry.get_string(RB.RhythmDBPropType.TITLE)
         self.nowartist = entry.get_string(RB.RhythmDBPropType.ARTIST)
         self.nowalbum = entry.get_string(RB.RhythmDBPropType.ALBUM)
-        # get musicbrainz details
+
+        # Get musicbrainz details
         self.nowMBtitle = entry.get_string(RB.RhythmDBPropType.MB_TRACKID)
         self.nowMBartist = entry.get_string(RB.RhythmDBPropType.MB_ARTISTID)
-        # try album artist if artist is missing
+        # Try album artist if artist is missing
         if not self.nowMBartist:
             self.nowMBartist = entry.get_string(RB.RhythmDBPropType.MB_ALBUMARTISTID)
         self.nowMBalbum = entry.get_string(RB.RhythmDBPropType.MB_ALBUMID)
+
         self.compare_track()
 
     def compare_track(self):
-        """ write changes when time and data is different """
-        if not self.nowtitle == self.lasttitle and not self.nowtitle == self.lastartist and not self.nowalbum == self.lastalbum:
+        """ Write changes when time and data is different """
+        if not (self.nowtitle == self.lasttitle and
+                self.nowtitle == self.lastartist and
+                self.nowalbum == self.lastalbum):
             # The song has changed so update
             self.lasttitle = self.nowtitle
             self.lastartist = self.nowartist
@@ -144,17 +145,17 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             self.lastMBalbum = self.nowMBalbum
             # Wait a small amount of time to allow for skipping
             if int(self.nowtime - self.lasttime) > 5:
-                # log track details in musicbrainz format
+                # Log track details in last.fm format
                 # date	title	artist	album	m title	m artist	m album
                 self.log_processing((str(self.nowtime) + '\t' + self.nowtitle +
                                      '\t' + self.nowartist + '\t' +
                                      self.nowalbum + '\t' + self.nowMBtitle +
                                      '\t' + self.nowMBartist +
                                      '\t' + self.nowMBalbum))
-                # update time it there is a change
+                # Update time if there is a change
                 self.lasttime = self.nowtime
             else:
-                print(str(int(self.nowtime - self.lasttime)) + 'second is too quick to log')
+                print(str(int(self.nowtime - self.lasttime)) + 'seconds is too quick to log')
         return
 
     def _check_configfile(self):
@@ -218,7 +219,7 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         # Fallback cache file to home folder
         if not log_path:
             log_path = os.getenv('HOME') + '/cache-fm.txt'
-        print('Writing to' + log_path)
+        print('Writing to ' + log_path)
         # Create if missing or over the size limit
         if not os.path.exists(log_path):
             files = codecs.open(log_path, 'w', 'utf8')
@@ -238,6 +239,7 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             files.write((u''.join(logline)) + u'\n')
         files.close()
         return
+
 
 class PythonSource(RB.Source):
     """ Register with rhythmbox """
