@@ -70,7 +70,7 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         self.nowMBartist = None
         self.nowMBalbum = None
         # Fields for the last saved track to check against
-        self.lasttime = None
+        self.lasttime = int(time.time())
         self.lasttitle = None
         self.lastartist = None
         self.lastalbum = None
@@ -126,25 +126,35 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         # get musicbrainz details
         self.nowMBtitle = entry.get_string(RB.RhythmDBPropType.MB_TRACKID)
         self.nowMBartist = entry.get_string(RB.RhythmDBPropType.MB_ARTISTID)
+        # try album artist if artist is missing
+        if not self.nowMBartist:
+            self.nowMBartist = entry.get_string(RB.RhythmDBPropType.MB_ALBUMARTISTID)
         self.nowMBalbum = entry.get_string(RB.RhythmDBPropType.MB_ALBUMID)
         self.compare_track()
 
     def compare_track(self):
+        """ write changes when time and data is different """
         if not self.nowtitle == self.lasttitle and not self.nowtitle == self.lastartist and not self.nowalbum == self.lastalbum:
-            self.lasttime = self.nowtime
+            # The song has changed so update
             self.lasttitle = self.nowtitle
             self.lastartist = self.nowartist
             self.lastalbum = self.nowalbum
             self.lastMBtitle = self.nowMBtitle
             self.lastMBartist = self.nowMBartist
             self.lastMBalbum = self.nowMBalbum
-            # log track details in musicbrainz format
-            # date	title	artist	album	m title	m artist	m album
-            self.log_processing((str(self.nowtime) + '\t' + self.nowtitle +
-                                 '\t' + self.nowartist + '\t' +
-                                 self.nowalbum + '\t' + self.nowMBtitle +
-                                 '\t' + self.nowMBartist +
-                                 '\t' + self.nowMBalbum))
+            # Wait a small amount of time to allow for skipping
+            if int(self.nowtime - self.lasttime) > 5:
+                # log track details in musicbrainz format
+                # date	title	artist	album	m title	m artist	m album
+                self.log_processing((str(self.nowtime) + '\t' + self.nowtitle +
+                                     '\t' + self.nowartist + '\t' +
+                                     self.nowalbum + '\t' + self.nowMBtitle +
+                                     '\t' + self.nowMBartist +
+                                     '\t' + self.nowMBalbum))
+                # update time it there is a change
+                self.lasttime = self.nowtime
+            else:
+                print(str(int(self.nowtime - self.lasttime)) + 'second is too quick to log')
         return
 
     def _check_configfile(self):
