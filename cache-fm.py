@@ -152,10 +152,10 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
                                      self.nowalbum + '\t' + self.nowMBtitle +
                                      '\t' + self.nowMBartist +
                                      '\t' + self.nowMBalbum))
-                # Update time if there is a change
-                self.lasttime = self.nowtime
             else:
                 print(str(int(self.nowtime - self.lasttime)) + 'seconds is too quick to log')
+            # Even if no song is logged, timer should be reset.
+            self.lasttime = self.nowtime
         return
 
     def _check_configfile(self):
