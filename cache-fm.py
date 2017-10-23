@@ -216,9 +216,13 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         log_path = self.conf.get(C, 'log_path')
         log_rotate = self.conf.get(C, 'log_rotate')
         log_limit = self.conf.get(C, 'log_limit')
+        # Check if just a folder is used
+        if os.path.isdir(log_path):
+            print('Your log_path is a directory. Adding default filename')
+            log_path = os.path.join(log_path, 'cache-fm.txt')
         # Fallback cache file to home folder
-        if not log_path:
-            log_path = os.getenv('HOME') + '/cache-fm.txt'
+        elif not log_path:
+            log_path = os.path.join(os.getenv('HOME'), '/cache-fm.txt')
         print('Writing to ' + log_path)
         # Create if missing or over the size limit
         if not os.path.exists(log_path):
