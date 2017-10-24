@@ -133,9 +133,10 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
 
     def compare_track(self):
         """ Write changes when time and data is different """
-        if not (self.nowtitle == self.lasttitle and
-                self.nowtitle == self.lastartist and
-                self.nowalbum == self.lastalbum):
+        if (self.nowtitle != self.lasttitle and
+            self.nowtitle != self.lastartist and
+            self.nowalbum != self.lastalbum):
+
             # The song has changed so update
             self.lasttitle = self.nowtitle
             self.lastartist = self.nowartist
@@ -143,6 +144,7 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             self.lastMBtitle = self.nowMBtitle
             self.lastMBartist = self.nowMBartist
             self.lastMBalbum = self.nowMBalbum
+
             # Wait a small amount of time to allow for skipping
             if int(self.nowtime - self.lasttime) > 5:
                 # Log track details in last.fm format
@@ -154,8 +156,8 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
                                      '\t' + self.nowMBalbum))
             else:
                 print(str(int(self.nowtime - self.lasttime)) + 'seconds is too quick to log')
-            # Even if no song is logged, timer should be reset.
-            self.lasttime = self.nowtime
+        # Even if no song is logged, timer should be reset each time you pause/restart.
+        self.lasttime = self.nowtime
         return
 
     def _check_configfile(self):
