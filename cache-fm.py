@@ -73,7 +73,7 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         self.nowMBalbum = None
 
         # Fields for the last saved track to check against
-        self.lasttime = int(time.time())
+        self.lasttime = None
         self.lasttitle = None
         self.lastartist = None
         self.lastalbum = None
@@ -113,7 +113,10 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         """ When playback entry has changed, get the tags and compare """
         entry = self.player.get_playing_entry()
         if not entry:
+            self.lasttime = None
             return None, None, None
+        if not self.lasttime:
+            self.lasttime = int(time.time())
         self.nowtime = int(time.time())
 
         # Get name/string tags
@@ -129,35 +132,53 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             self.nowMBartist = entry.get_string(RB.RhythmDBPropType.MB_ALBUMARTISTID)
         self.nowMBalbum = entry.get_string(RB.RhythmDBPropType.MB_ALBUMID)
 
-        self.compare_track()
-
-    def compare_track(self):
-        """ Write changes when time and data is different """
-        if (self.nowtitle != self.lasttitle and
-            self.nowtitle != self.lastartist and
-            self.nowalbum != self.lastalbum):
-
-            # The song has changed so update
+        # Make initial last* fields the same
+        if not self.lasttitle or not self.lastartist or not self.lastalbum:
             self.lasttitle = self.nowtitle
             self.lastartist = self.nowartist
             self.lastalbum = self.nowalbum
             self.lastMBtitle = self.nowMBtitle
             self.lastMBartist = self.nowMBartist
             self.lastMBalbum = self.nowMBalbum
+        self.compare_track()
+
+    def compare_track(self):
+        """ Write changes when time and data is different """
+        if not self.nowtitle or not self.nowartist or not self.nowalbum:
+            # Playback not changed from None
+            return
+        # Playing song has changed
+        elif (self.nowtitle != self.lasttitle and
+            self.nowartist != self.lastartist and
+            self.nowalbum != self.lastalbum):
 
             # Wait a small amount of time to allow for skipping
             if int(self.nowtime - self.lasttime) > 5:
                 # Log track details in last.fm format
                 # date	title	artist	album	m title	m artist	m album
-                self.log_processing((str(self.nowtime) + '\t' + self.nowtitle +
-                                     '\t' + self.nowartist + '\t' +
-                                     self.nowalbum + '\t' + self.nowMBtitle +
-                                     '\t' + self.nowMBartist +
-                                     '\t' + self.nowMBalbum))
-                # Reset the timer after writes
-                self.lasttime = self.nowtime
+                self.log_processing((str(self.nowtime) + '\t' + self.lasttitle +
+                                     '\t' + self.lastartist + '\t' +
+                                     self.lastalbum + '\t' + self.lastMBtitle +
+                                     '\t' + self.lastMBartist +
+                                     '\t' + self.lastMBalbum))
+                print('\nWriting track:\n' +
+                      'time' + str(self.lasttime) + '\n' +
+                      'name' + str(self.lasttitle) + '\n' +
+                      'arti' + str(self.lastartist) + '\n' +
+                      '' + str(self.nowalbum))
+                # Reset last*  after information is logged to catch the song that has finished
+                self.lasttitle = self.nowtitle
+                self.lastartist = self.nowartist
+                self.lastalbum = self.nowalbum
+                self.lastMBtitle = self.nowMBtitle
+                self.lastMBartist = self.nowMBartist
+                self.lastMBalbum = self.nowMBalbum
+                # Reset completely after writing a log line
+                self.lasttime = None
             else:
-                print(str(int(self.nowtime - self.lasttime)) + 'seconds is too quick to log')
+                print(str(int(self.nowtime - self.lasttime)) + ' seconds is too quick to log')
+            # Reset the timer after each song change
+            self.lasttime = self.nowtime
         return
 
     def _check_configfile(self):
