@@ -162,10 +162,10 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
                                      '\t' + self.lastMBartist +
                                      '\t' + self.lastMBalbum))
                 print('\nWriting track:\n' +
-                      'time' + str(self.lasttime) + '\n' +
-                      'name' + str(self.lasttitle) + '\n' +
-                      'arti' + str(self.lastartist) + '\n' +
-                      '' + str(self.nowalbum))
+                      'time: ' + str(self.lasttime) + '\n' +
+                      'name: ' + str(self.lasttitle) + '\n' +
+                      'arti: ' + str(self.lastartist) + '\n' +
+                      'albu: ' + str(self.lastalbum))
             else:
                 print(str(int(self.nowtime - self.lasttime)) + ' seconds is too quick to log')
 
@@ -177,7 +177,7 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             self.lastMBartist = self.nowMBartist
             self.lastMBalbum = self.nowMBalbum
             # Reset the timer after each song change
-            self.lasttime = None
+            self.lasttime = self.nowtime
         return
 
     def _check_configfile(self):
