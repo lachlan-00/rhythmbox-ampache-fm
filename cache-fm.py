@@ -99,6 +99,8 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
     def do_deactivate(self):
         """ Deactivate the plugin """
         print('deactivating cache-fm')
+        self.nowtime = int(time.time())
+        self.cache_writer()
         Gio.Application.get_default()
         del self.shell
         del self.rbdb
@@ -111,36 +113,39 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
 
     def playing_changed(self, shell_player, playing):
         """ When playback entry has changed, get the tags and compare """
-        entry = self.player.get_playing_entry()
-        if not entry:
-            self.lasttime = None
+        entry = shell_player.get_playing_entry()
+
+        if not playing:
+            #self.lasttime = None
             return None, None, None
+
         if not self.lasttime:
             self.lasttime = int(time.time())
         self.nowtime = int(time.time())
+        
+        if entry:
+            # Get name/string tags
+            self.nowtitle = entry.get_string(RB.RhythmDBPropType.TITLE)
+            self.nowartist = entry.get_string(RB.RhythmDBPropType.ARTIST)
+            self.nowalbum = entry.get_string(RB.RhythmDBPropType.ALBUM)
 
-        # Get name/string tags
-        self.nowtitle = entry.get_string(RB.RhythmDBPropType.TITLE)
-        self.nowartist = entry.get_string(RB.RhythmDBPropType.ARTIST)
-        self.nowalbum = entry.get_string(RB.RhythmDBPropType.ALBUM)
+            # Get musicbrainz details
+            self.nowMBtitle = entry.get_string(RB.RhythmDBPropType.MB_TRACKID)
+            self.nowMBartist = entry.get_string(RB.RhythmDBPropType.MB_ARTISTID)
+            # Try album artist if artist is missing
+            if not self.nowMBartist:
+                self.nowMBartist = entry.get_string(RB.RhythmDBPropType.MB_ALBUMARTISTID)
+            self.nowMBalbum = entry.get_string(RB.RhythmDBPropType.MB_ALBUMID)
 
-        # Get musicbrainz details
-        self.nowMBtitle = entry.get_string(RB.RhythmDBPropType.MB_TRACKID)
-        self.nowMBartist = entry.get_string(RB.RhythmDBPropType.MB_ARTISTID)
-        # Try album artist if artist is missing
-        if not self.nowMBartist:
-            self.nowMBartist = entry.get_string(RB.RhythmDBPropType.MB_ALBUMARTISTID)
-        self.nowMBalbum = entry.get_string(RB.RhythmDBPropType.MB_ALBUMID)
-
-        # Make initial last* fields the same
-        if not self.lasttitle or not self.lastartist or not self.lastalbum:
-            self.lasttitle = self.nowtitle
-            self.lastartist = self.nowartist
-            self.lastalbum = self.nowalbum
-            self.lastMBtitle = self.nowMBtitle
-            self.lastMBartist = self.nowMBartist
-            self.lastMBalbum = self.nowMBalbum
-        self.compare_track()
+            # Make initial last* fields the same
+            if not self.lasttitle or not self.lastartist or not self.lastalbum:
+                self.lasttitle = self.nowtitle
+                self.lastartist = self.nowartist
+                self.lastalbum = self.nowalbum
+                self.lastMBtitle = self.nowMBtitle
+                self.lastMBartist = self.nowMBartist
+                self.lastMBalbum = self.nowMBalbum
+            self.compare_track()
 
     def compare_track(self):
         """ Write changes when time and data is different """
@@ -152,22 +157,8 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             self.nowartist != self.lastartist and
             self.nowalbum != self.lastalbum):
 
-            # Wait a small amount of time to allow for skipping
-            if int(self.nowtime - self.lasttime) > 5:
-                # Log track details in last.fm format
-                # date	title	artist	album	m title	m artist	m album
-                self.log_processing((str(self.nowtime) + '\t' + self.lasttitle +
-                                     '\t' + self.lastartist + '\t' +
-                                     self.lastalbum + '\t' + self.lastMBtitle +
-                                     '\t' + self.lastMBartist +
-                                     '\t' + self.lastMBalbum))
-                print('\nWriting track:\n' +
-                      'time: ' + str(self.lasttime) + '\n' +
-                      'name: ' + str(self.lasttitle) + '\n' +
-                      'arti: ' + str(self.lastartist) + '\n' +
-                      'albu: ' + str(self.lastalbum))
-            else:
-                print(str(int(self.nowtime - self.lasttime)) + ' seconds is too quick to log')
+            # Check time and write lines
+            self.cache_writer()
 
             # Reset last*  after each change to catch the song that has finished
             self.lasttitle = self.nowtitle
@@ -179,6 +170,24 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             # Reset the timer after each song change
             self.lasttime = self.nowtime
         return
+
+    def cache_writer(self):
+        """ Wait a small amount of time to allow for skipping """
+        if int(self.nowtime - self.lasttime) > 5:
+            # Log track details in last.fm format
+            # date	title	artist	album	m title	m artist	m album
+            self.log_processing((str(self.nowtime) + '\t' + self.lasttitle +
+                                 '\t' + self.lastartist + '\t' +
+                                 self.lastalbum + '\t' + self.lastMBtitle +
+                                 '\t' + self.lastMBartist +
+                                 '\t' + self.lastMBalbum))
+            print('\nWriting track:\n' +
+                  'time: ' + str(self.lasttime) + '\n' +
+                  'name: ' + str(self.lasttitle) + '\n' +
+                  'arti: ' + str(self.lastartist) + '\n' +
+                  'albu: ' + str(self.lastalbum))
+        else:
+            print(str(int(self.nowtime - self.lasttime)) + ' seconds is too quick to log')
 
     def _check_configfile(self):
         """ Copy the default config template or load existing config file """
