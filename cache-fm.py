@@ -29,7 +29,6 @@ import time
 
 gi.require_version('Peas', '1.0')
 gi.require_version('PeasGtk', '1.0')
-gi.require_version('Notify', '0.7')
 gi.require_version('RB', '3.0')
 
 from gi.repository import GObject, Peas, PeasGtk, Gio, Gtk
@@ -116,7 +115,6 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         entry = shell_player.get_playing_entry()
 
         if not playing:
-            #self.lasttime = None
             return None, None, None
 
         if not self.lasttime:
@@ -154,8 +152,8 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             return
         # Playing song has changed
         elif (self.nowtitle != self.lasttitle and
-            self.nowartist != self.lastartist and
-            self.nowalbum != self.lastalbum):
+              self.nowartist != self.lastartist and
+              self.nowalbum != self.lastalbum):
 
             # Check time and write lines
             self.cache_writer()

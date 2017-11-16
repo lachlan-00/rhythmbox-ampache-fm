@@ -1,8 +1,17 @@
 RHYTHMBOX CACHE-FM
 ==================
 
-Cache each song played to a local file.
+Cache each song played in Rhythmbox to a local file.
 Useful for recording playback which can be synced later to other places.
+
+Verson 1.0!
+-----------
+
+Everything is working the way it should and we are stable.
+I've been trying to break and find issues and work around
+anything that's come up.
+
+Please enjoy breaking those last.fm chains!
 
 INSTALL
 -------
@@ -18,6 +27,20 @@ If you want to install manually, extract to the following directory:
 
 You can test python dependencies by running:
 python3 -c "import depends_test; depends_test.check()"
+
+CONFIGURE
+---------
+
+ * Cache Location: This can be a Directory or a full file path.
+   When using a directory the default filename is added (cache-fm.txt)
+	* /home/user/cache-fm.txt
+    * /home/user/cache
+
+ * Rotate Large files: Rename large files with the epoch time they are rotated
+    * cache-fm.txt -> cache-fm1510722240.txt
+
+ * Cache Size Limit (bytes): The size limit of your log file. (Default 10Mb)
+
 
 USAGE & FEATURES
 ----------------

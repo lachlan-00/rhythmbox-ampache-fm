@@ -1,6 +1,6 @@
 INSTALLPATH="$(HOME)/.local/share/rhythmbox/plugins/cache-fm/"
 INSTALLTEXT="The cache-fm plugin has been installed. You may now restart Rhythmbox and enable the 'cache-fm' plugin."
-UNINSTALLTEXT="The cache-fm plugin had been removed. The next time you restart Rhythmbox it will dissappear from the plugins list."
+UNINSTALLTEXT="The cache-fm plugin had been removed. The next time you restart Rhythmbox it will disappear from the plugins list."
 PLUGINFILE="cache-fm.plugin"
 
 install-req:
