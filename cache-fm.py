@@ -171,6 +171,8 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
 
     def cache_writer(self):
         """ Wait a small amount of time to allow for skipping """
+        if not self.nowtime or not self.lasttime:
+            return
         if int(self.nowtime - self.lasttime) > 5:
             # Log track details in last.fm format
             # date	title	artist	album	m title	m artist	m album
@@ -259,7 +261,7 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             files.close()
         elif os.path.getsize(log_path) >= int(log_limit) and log_rotate == 'True':
             print('rotating large cache file')
-            shutil.copyfile(log_path, log_path.replace('.txt', (str(int(time.time())) + '.txt')))
+            shutil.copyfile(log_path, log_path.replace(log_path[-4:], (str(int(time.time())) + log_path[-4:])))
             files = codecs.open(log_path, 'w', 'utf8')
             files.close()
         files = codecs.open(log_path, 'a', 'utf8')
