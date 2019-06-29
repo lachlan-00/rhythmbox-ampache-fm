@@ -1,11 +1,11 @@
-RHYTHMBOX CACHE-FM
-==================
+# RHYTHMBOX AMPACHE-FM
 
-Cache each song played in Rhythmbox to a local file.
-Useful for recording playback which can be synced later to other places.
+Scrobble each song played in Rhythmbox to your ampache server.
+Alternatively you can also just cache to a local file.
+Replace last.fm with your homespun alternative or record playback
+which can be synced later to other places/devices.
 
-Verson 1.0!
------------
+## Verson 2.0
 
 Everything is working the way it should and we are stable.
 I've been trying to break and find issues and work around
@@ -13,37 +13,40 @@ anything that's come up.
 
 Please enjoy breaking those last.fm chains!
 
-INSTALL
--------
+## INSTALL
 
 To install from the terminal using make:
-make install
 
-To check the dependencies, then install using python:
-python3 ./install.py
+``` shell
+  make install
+```
+
+To install from the terminal using python (also checks dependencies!)
+
+``` shell
+  python3 ./install.py
+```
 
 If you want to install manually, extract to the following directory:
- * $HOME/.local/share/rhythmbox/plugins/fileorganizer/
+
+* $HOME/.local/share/rhythmbox/plugins/ampache-fm/
 
 You can test python dependencies by running:
 python3 -c "import depends_test; depends_test.check()"
 
-CONFIGURE
----------
+## CONFIGURE
 
- * Cache Location: This can be a Directory or a full file path.
-   When using a directory the default filename is added (cache-fm.txt)
-	* /home/user/cache-fm.txt
-    * /home/user/cache
+* Cache Location: This can be a Directory or a full file path.
+   When using a directory the default filename is added (ampache-fm.txt)
+  * /home/user/ampache-fm.txt
+  * /home/user/cache
 
- * Rotate Large files: Rename large files with the epoch time they are rotated
-    * cache-fm.txt -> cache-fm1510722240.txt
+* Cache Size Limit (bytes): The size limit of your log file. (Default 10Mb)
 
- * Cache Size Limit (bytes): The size limit of your log file. (Default 10Mb)
+* Rotate Large files: Rename large files with the epoch time they are rotated
+  * ampache-fm.txt -> ampache-fm1510722240.txt
 
-
-USAGE & FEATURES
-----------------
+## USAGE & FEATURES
 
 I currently use this plugin in conjunction with my ampache scripts
 [https://github.com/lachlan-00/ampache-scripts]
@@ -54,15 +57,14 @@ allowing me to maintain a single point of truth for my playback data.
 Using this plugin I have been able to completely remove myself from last.fm
 and other external caching services keeping this information under my control.
 
-COMMAND EXAMPLE
----------------
+## COMMAND EXAMPLE
 
 Play music in rhythmbox and then sync with your database.
-~~~
-./mysql-connection.py /d:/home/user/ownCloud/cache-fm.txt
-~~~
 
-HOMEPAGE
---------
+``` shell
+./mysql-connection.py /d:/home/user/ownCloud/ampache-fm.txt
+```
 
-[https://github.com/lachlan-00/cache-fm]
+## HOMEPAGE
+
+[https://github.com/lachlan-00/ampache-fm]

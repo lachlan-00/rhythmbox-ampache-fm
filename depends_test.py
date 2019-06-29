@@ -11,7 +11,7 @@
 
 
 def check():
-    """ Importing all libraries used by FileOrganizer """
+    """ Importing all libraries used by ampache-fm """
     clear = False
     try:
         import codecs
