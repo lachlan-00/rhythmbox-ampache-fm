@@ -20,6 +20,8 @@ def check():
         import os
         import shutil
         import time
+        import urllib.parse
+        import urllib.request
 
         gi.require_version('Peas', '1.0')
         gi.require_version('PeasGtk', '1.0')
