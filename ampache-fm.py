@@ -26,6 +26,8 @@ import gi
 import os
 import shutil
 import time
+import urllib.parse
+import urllib.request
 
 gi.require_version('Peas', '1.0')
 gi.require_version('PeasGtk', '1.0')
@@ -80,6 +82,11 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         self.lastMBartist = None
         self.lastMBalbum = None
 
+        # ampache details
+        self.ampache_url = None
+        self.ampache_api = None
+        self.can_scrobble = False
+
     def do_activate(self):
         """ Activate the plugin """
         print('activating ampache-fm')
@@ -122,6 +129,13 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         self.nowtime = int(time.time())
         
         if entry:
+            # Get Ampache details
+            self.conf.read(self.configfile)
+            self.ampache_url = self.conf.get(C, 'ampache_url')
+            self.ampache_api = self.conf.get(C, 'ampache_api')
+            if self.ampache_url[:8] == 'https://' or self.ampache_url[:7] == 'http://':
+                self.can_scrobble = True
+
             # Get name/string tags
             self.nowtitle = entry.get_string(RB.RhythmDBPropType.TITLE)
             self.nowartist = entry.get_string(RB.RhythmDBPropType.ARTIST)
@@ -174,18 +188,29 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         if not self.nowtime or not self.lasttime:
             return
         if int(self.nowtime - self.lasttime) > 5:
-            # Log track details in last.fm format
-            # date	title	artist	album	m title	m artist	m album
-            self.log_processing((str(self.nowtime) + '\t' + self.lasttitle +
-                                 '\t' + self.lastartist + '\t' +
-                                 self.lastalbum + '\t' + self.lastMBtitle +
-                                 '\t' + self.lastMBartist +
-                                 '\t' + self.lastMBalbum))
-            print('\nWriting track:\n' +
-                  'time: ' + str(self.lasttime) + '\n' +
-                  'name: ' + str(self.lasttitle) + '\n' +
-                  'arti: ' + str(self.lastartist) + '\n' +
-                  'albu: ' + str(self.lastalbum))
+            tmp_scrobble = False
+            if self.can_scrobble:
+                scrobble = self.scrobble_track()
+            if scrobble:
+                print('\nScrobbled track to ' + self.ampache_url + ':\n' +
+                      'time: ' + str(self.lasttime) + '\n' +
+                      'name: ' + str(self.lasttitle) + '\n' +
+                      'arti: ' + str(self.lastartist) + '\n' +
+                      'albu: ' + str(self.lastalbum))
+            else:
+                # Log track details in last.fm format
+                # date	title	artist	album	m title	m artist	m album
+                self.log_processing((str(self.nowtime) + '\t' + self.lasttitle +
+                                     '\t' + self.lastartist + '\t' +
+                                     self.lastalbum + '\t' + self.lastMBtitle +
+                                     '\t' + self.lastMBartist +
+                                     '\t' + self.lastMBalbum))
+                print('\nWriting track:\n' +
+                      'time: ' + str(self.lasttime) + '\n' +
+                      'name: ' + str(self.lasttitle) + '\n' +
+                      'arti: ' + str(self.lastartist) + '\n' +
+                      'albu: ' + str(self.lastalbum))
+
         else:
             print(str(int(self.nowtime - self.lasttime)) + ' seconds is too quick to log')
 
@@ -220,6 +245,8 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
                                                 window.destroy())
         build.get_object('savebutton').connect('clicked', lambda x:
                                                self.save_config(build))
+        build.get_object('ampache_url').set_text(self.conf.get(C, 'ampache_url'))
+        build.get_object('ampache_api').set_text(self.conf.get(C, 'ampache_api'))
         build.get_object('log_path').set_text(self.conf.get(C, 'log_path'))
         build.get_object('log_limit').set_text(self.conf.get(C, 'log_limit'))
         if self.conf.get(C, 'log_rotate') == 'True':
@@ -233,6 +260,10 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             self.conf.set(C, 'log_rotate', 'True')
         else:
             self.conf.set(C, 'log_rotate', 'False')
+        self.conf.set(C, 'ampache_url',
+                      builder.get_object('ampache_url').get_text())
+        self.conf.set(C, 'ampache_api',
+                      builder.get_object('ampache_api').get_text())
         self.conf.set(C, 'log_path',
                       builder.get_object('log_path').get_text())
         self.conf.set(C, 'log_limit',
@@ -240,6 +271,26 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         datafile = open(self.configfile, 'w')
         self.conf.write(datafile)
         datafile.close()
+
+    def scrobble_track(self):
+        """ Request Ampache record your play """
+        ampache_url = self.ampache_url + '/server/xml.server.php'
+        data = urllib.parse.urlencode({'action': 'scrobble',
+                                       'auth': self.ampache_api,
+                                       'client': 'AmpacheFM Rhythmbox',
+                                       'date': str(self.nowtime),
+                                       'song': self.lasttitle,
+                                       'album': self.lastalbum,
+                                       'artist': self.lastartist,
+                                       'songmbid': self.lastMBtitle,
+                                       'albummbid': self.lastMBalbum,
+                                       'artistmdib': self.lastMBartist})
+        full_url = ampache_url + '?' + data
+        result = urllib.request.urlopen(full_url)
+        ampache_response = result.read().decode('utf-8')
+        result.close()
+        # return false when you can't confirm scrobble
+        return 'successfully scrobbled:' in ampache_response
 
     def log_processing(self, logmessage):
         """ Perform log operations """
