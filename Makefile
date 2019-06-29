@@ -1,16 +1,16 @@
-INSTALLPATH="$(HOME)/.local/share/rhythmbox/plugins/cache-fm/"
-INSTALLTEXT="The cache-fm plugin has been installed. You may now restart Rhythmbox and enable the 'cache-fm' plugin."
-UNINSTALLTEXT="The cache-fm plugin had been removed. The next time you restart Rhythmbox it will disappear from the plugins list."
-PLUGINFILE="cache-fm.plugin"
+INSTALLPATH="$(HOME)/.local/share/rhythmbox/plugins/ampache-fm/"
+INSTALLTEXT="The ampache-fm plugin has been installed. You may now restart Rhythmbox and enable the 'ampache-fm' plugin."
+UNINSTALLTEXT="The ampache-fm plugin had been removed. The next time you restart Rhythmbox it will disappear from the plugins list."
+PLUGINFILE="ampache-fm.plugin"
 
 install-req:
 	# Make environment
 	mkdir -p $(INSTALLPATH)
 	# Copy files, forcefully
 	cp $(PLUGINFILE) $(INSTALLPATH) -f
-	cp cache-fm.py $(INSTALLPATH) -f
+	cp ampache-fm.py $(INSTALLPATH) -f
 	cp config.ui $(INSTALLPATH) -f
-	cp cfm.conf.template $(INSTALLPATH) -f
+	cp afm.conf.template $(INSTALLPATH) -f
 	cp README.md $(INSTALLPATH) -f
 	cp LICENSE $(INSTALLPATH) -f
 	cp AUTHORS $(INSTALLPATH) -f

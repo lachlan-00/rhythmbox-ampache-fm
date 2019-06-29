@@ -16,7 +16,7 @@ INSTALLPATH = os.path.join(os.getenv('HOME'),
 INSTALLFILES = ['AUTHORS',
                 'LICENSE',
                 'README.md',
-                'cfm.conf.template',
+                'afm.conf.template',
                 'ampache-fm.plugin',
                 'config.ui',
                 'ampache-fm.py']
