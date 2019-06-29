@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-""" cache-fm Safe Install Script
+""" ampache-fm Safe Install Script
 
     Install if dependencies are satisfied
 
@@ -12,14 +12,14 @@ import shutil
 import depends_test
 
 INSTALLPATH = os.path.join(os.getenv('HOME'),
-                           ".local/share/rhythmbox/plugins/cache-fm")
+                           ".local/share/rhythmbox/plugins/ampache-fm")
 INSTALLFILES = ['AUTHORS',
                 'LICENSE',
                 'README.md',
                 'cfm.conf.template',
-                'cache-fm.plugin',
+                'ampache-fm.plugin',
                 'config.ui',
-                'cache-fm.py']
+                'ampache-fm.py']
 
 # The depends test will check for required modules
 if depends_test.check():
@@ -31,6 +31,6 @@ if depends_test.check():
         if os.path.isfile(i) and i in INSTALLFILES:
             print('Copying... ' + i)
             shutil.copy(i, INSTALLPATH)
-    print('\ncache-fm is now installed\n')
+    print('\nampache-fm is now installed\n')
 else:
     print('please check your OS for missing packages')

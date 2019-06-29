@@ -2,11 +2,11 @@
 <!-- Generated with glade 3.20.1 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
-  <object class="GtkDialog" id="cache-fm">
+  <object class="GtkDialog" id="ampache-fm">
     <property name="width_request">650</property>
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
-    <property name="title" translatable="yes">Cache-fm</property>
+    <property name="title" translatable="yes">ampache-fm</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox1">
@@ -61,7 +61,7 @@
             <property name="can_focus">False</property>
             <property name="halign">center</property>
             <property name="margin_bottom">7</property>
-            <property name="label" translatable="yes">Cache-fm Preferences</property>
+            <property name="label" translatable="yes">ampache-fm Preferences</property>
             <attributes>
               <attribute name="style" value="normal"/>
               <attribute name="weight" value="semibold"/>

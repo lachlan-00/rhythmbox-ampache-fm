@@ -3,7 +3,7 @@
 """       Copyright (C)2017
        Lachlan de Waard <lachlan.00@gmail.com>
        --------------------------------------
-       Rhythmbox Cache.FM
+       Rhythmbox AmpacheFM
        --------------------------------------
 
  This program is free software: you can redistribute it and/or modify
@@ -35,21 +35,21 @@ from gi.repository import GObject, Peas, PeasGtk, Gio, Gtk
 from gi.repository import RB
 
 
-PLUGIN_PATH = 'plugins/cache-fm/'
-CONFIGFILE = 'cfm.conf'
-CONFIGTEMPLATE = 'cfm.conf.template'
+PLUGIN_PATH = 'plugins/ampache-fm/'
+CONFIGFILE = 'afm.conf'
+CONFIGTEMPLATE = 'afm.conf.template'
 UIFILE = 'config.ui'
 C = 'conf'
 
 
-class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
-    __gtype_name__ = 'cache-fm'
+class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
+    __gtype_name__ = 'ampache-fm'
     object = GObject.property(type=GObject.Object)
 
     def __init__(self):
         GObject.Object.__init__(self)
-        RB.BrowserSource.__init__(self, name=_('cache-fm'))
-        self.plugin_info = 'cache-fm'
+        RB.BrowserSource.__init__(self, name=_('ampache-fm'))
+        self.plugin_info = 'ampache-fm'
         self.conf = configparser.RawConfigParser()
         self.configfile = RB.find_user_data_file(PLUGIN_PATH + CONFIGFILE)
         self.ui_file = RB.find_user_data_file(PLUGIN_PATH + UIFILE)
@@ -82,7 +82,7 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
 
     def do_activate(self):
         """ Activate the plugin """
-        print('activating cache-fm')
+        print('activating ampache-fm')
         shell = self.object
         self.shell = shell
         self.rbdb = shell.props.db
@@ -97,7 +97,7 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
 
     def do_deactivate(self):
         """ Deactivate the plugin """
-        print('deactivating cache-fm')
+        print('deactivating ampache-fm')
         self.nowtime = int(time.time())
         self.cache_writer()
         Gio.Application.get_default()
@@ -199,7 +199,7 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             shutil.copyfile(template, self.configfile)
             # set default path for the user
             self.conf.read(self.configfile)
-            self.conf.set(C, 'log_path', os.path.join(RB.user_cache_dir(), 'cache-fm.txt'))
+            self.conf.set(C, 'log_path', os.path.join(RB.user_cache_dir(), 'ampache-fm.txt'))
             datafile = open(self.configfile, 'w')
             self.conf.write(datafile)
             datafile.close()
@@ -214,7 +214,7 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         build.add_from_file(self.ui_file)
         self._check_configfile()
         self.conf.read(self.configfile)
-        window = build.get_object('cache-fm')
+        window = build.get_object('ampache-fm')
         build.get_object('closebutton').connect('clicked',
                                                 lambda x:
                                                 window.destroy())
@@ -250,10 +250,10 @@ class CacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         # Check if just a folder is used
         if os.path.isdir(log_path):
             print('Your log_path is a directory. Adding default filename')
-            log_path = os.path.join(log_path, 'cache-fm.txt')
+            log_path = os.path.join(log_path, 'ampache-fm.txt')
         # Fallback cache file to home folder
         elif not log_path:
-            log_path = os.path.join(os.getenv('HOME'), '/cache-fm.txt')
+            log_path = os.path.join(os.getenv('HOME'), '/ampache-fm.txt')
         print('Writing to ' + log_path)
         # Create if missing or over the size limit
         if not os.path.exists(log_path):

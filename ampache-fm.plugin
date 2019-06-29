@@ -1,0 +1,10 @@
+[Plugin]
+Loader=python3
+Module=ampache-fm
+IAge=2
+Depends=rb
+Name=AmpacheFM
+Description=Cache playback history to Ampache with a local fallback
+Authors=Lachlan de Waard <lachlan.00@gmail.com>
+Copyright=Copyright © 2017 Lachlan de Waard
+Website=https://github.com/lachlan-00/ampache-fm

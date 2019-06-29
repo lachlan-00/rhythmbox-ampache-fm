@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-""" cache-fm: test your dependencies
+""" ampache-fm: test your dependencies
 
     ----------------Authors----------------
     Lachlan de Waard <lachlan.00@gmail.com>
@@ -34,7 +34,7 @@ def check():
         print('\nDependency Problem\n\n' + str(errormsg))
 
     if clear:
-        print('\nAll cache-fm dependencies are satisfied\n')
+        print('\nAll ampache-fm dependencies are satisfied\n')
         return True
     else:
         return False
