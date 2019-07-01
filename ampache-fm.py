@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-"""       Copyright (C)2017
+"""    Copyright (C)2019
        Lachlan de Waard <lachlan.00@gmail.com>
        --------------------------------------
-       Rhythmbox AmpacheFM
+       Rhythmbox Ampache-FM
        --------------------------------------
 
  This program is free software: you can redistribute it and/or modify
