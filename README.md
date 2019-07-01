@@ -7,7 +7,7 @@ which can be synced later to other places/devices.
 
 ## Verson 2.0
 
-Everything is working the way it should and we are stable.
+Everything is working the way it should be in a stable manner.
 I've been trying to break and find issues and work around
 anything that's come up.
 
@@ -35,6 +35,10 @@ You can test python dependencies by running:
 python3 -c "import depends_test; depends_test.check()"
 
 ## CONFIGURE
+
+* Ampache URL: The URL or your ampache server
+
+* Ampache API Key: Your API Key! (no username and password to keep it simple)
 
 * Cache Location: This can be a Directory or a full file path.
    When using a directory the default filename is added (ampache-fm.txt)

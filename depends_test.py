@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
 
-""" ampache-fm: test your dependencies
-
-    ----------------Authors----------------
-    Lachlan de Waard <lachlan.00@gmail.com>
-    ----------------Licence----------------
-    Creative Commons - Attribution Share Alike v3.0
-
+"""
+  Ampache-FM: test your dependencies
 """
 
 
@@ -20,6 +15,7 @@ def check():
         import os
         import shutil
         import time
+        import threading
         import urllib.parse
         import urllib.request
 

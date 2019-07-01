@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 
-""" ampache-fm Safe Install Script
-
-    Install if dependencies are satisfied
-
+"""
+  Ampache-FM Safe Install Script
+  Install if dependencies are satisfied
 """
 
 import os

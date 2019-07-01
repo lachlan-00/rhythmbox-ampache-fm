@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-"""       Copyright (C)2017
+"""    Copyright (C)2019
        Lachlan de Waard <lachlan.00@gmail.com>
        --------------------------------------
-       Rhythmbox AmpacheFM
+       Rhythmbox Ampache-FM
        --------------------------------------
 
  This program is free software: you can redistribute it and/or modify
@@ -26,8 +26,9 @@ import gi
 import os
 import shutil
 import time
-import urllib.parse
-import urllib.request
+import threading
+
+import Scrobble
 
 gi.require_version('Peas', '1.0')
 gi.require_version('PeasGtk', '1.0')
@@ -36,6 +37,7 @@ gi.require_version('RB', '3.0')
 from gi.repository import GObject, Peas, PeasGtk, Gio, Gtk
 from gi.repository import RB
 
+from multiprocessing import Process
 
 PLUGIN_PATH = 'plugins/ampache-fm/'
 CONFIGFILE = 'afm.conf'
@@ -131,7 +133,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         if entry:
             # Get Ampache details
             self.conf.read(self.configfile)
-            self.ampache_url = self.conf.get(C, 'ampache_url')
+            self.ampache_url = self.conf.get(C, 'ampache_url').rstrip('/')
             self.ampache_api = self.conf.get(C, 'ampache_api')
             if self.ampache_url[:8] == 'https://' or self.ampache_url[:7] == 'http://':
                 self.can_scrobble = True
@@ -187,30 +189,17 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         """ Wait a small amount of time to allow for skipping """
         if not self.nowtime or not self.lasttime:
             return
-        if int(self.nowtime - self.lasttime) > 5:
-            tmp_scrobble = False
+        if int(self.nowtime - self.lasttime) > 10:
             if self.can_scrobble:
-                scrobble = self.scrobble_track()
-            if scrobble:
-                print('\nScrobbled track to ' + self.ampache_url + ':\n' +
-                      'time: ' + str(self.lasttime) + '\n' +
-                      'name: ' + str(self.lasttitle) + '\n' +
-                      'arti: ' + str(self.lastartist) + '\n' +
-                      'albu: ' + str(self.lastalbum))
-            else:
-                # Log track details in last.fm format
-                # date	title	artist	album	m title	m artist	m album
-                self.log_processing((str(self.nowtime) + '\t' + self.lasttitle +
-                                     '\t' + self.lastartist + '\t' +
-                                     self.lastalbum + '\t' + self.lastMBtitle +
-                                     '\t' + self.lastMBartist +
-                                     '\t' + self.lastMBalbum))
-                print('\nWriting track:\n' +
-                      'time: ' + str(self.lasttime) + '\n' +
-                      'name: ' + str(self.lasttitle) + '\n' +
-                      'arti: ' + str(self.lastartist) + '\n' +
-                      'albu: ' + str(self.lastalbum))
-
+                scrobble = Process(target=Scrobble.run, args=(self.nowtime, self.lasttitle, self.lastartist, self.lastalbum, self.lastMBtitle, self.lastMBartist, self.lastMBalbum, self.ampache_url, self.ampache_api))
+                scrobble.start()
+            # Log track details in last.fm format
+            # date	title	artist	album	m title	m artist	m album
+            self.log_processing((str(self.nowtime) + '\t' + self.lasttitle +
+                                 '\t' + self.lastartist + '\t' +
+                                 self.lastalbum + '\t' + self.lastMBtitle +
+                                 '\t' + self.lastMBartist +
+                                 '\t' + self.lastMBalbum))
         else:
             print(str(int(self.nowtime - self.lasttime)) + ' seconds is too quick to log')
 
@@ -271,26 +260,6 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         datafile = open(self.configfile, 'w')
         self.conf.write(datafile)
         datafile.close()
-
-    def scrobble_track(self):
-        """ Request Ampache record your play """
-        ampache_url = self.ampache_url + '/server/xml.server.php'
-        data = urllib.parse.urlencode({'action': 'scrobble',
-                                       'auth': self.ampache_api,
-                                       'client': 'AmpacheFM Rhythmbox',
-                                       'date': str(self.nowtime),
-                                       'song': self.lasttitle,
-                                       'album': self.lastalbum,
-                                       'artist': self.lastartist,
-                                       'songmbid': self.lastMBtitle,
-                                       'albummbid': self.lastMBalbum,
-                                       'artistmdib': self.lastMBartist})
-        full_url = ampache_url + '?' + data
-        result = urllib.request.urlopen(full_url)
-        ampache_response = result.read().decode('utf-8')
-        result.close()
-        # return false when you can't confirm scrobble
-        return 'successfully scrobbled:' in ampache_response
 
     def log_processing(self, logmessage):
         """ Perform log operations """
