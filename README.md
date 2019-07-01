@@ -66,7 +66,7 @@ and other external caching services keeping this information under my control.
 Play music in rhythmbox and then sync with your database.
 
 ``` shell
-./mysql-connection.py /d:/home/user/ownCloud/ampache-fm.txt
+./update_ampache_from_file.py /d:/home/user/ownCloud/ampache-fm.txt
 ```
 
 ## HOMEPAGE
