@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-"""    Copyright (C)2019
+"""       Copyright (C)2017
        Lachlan de Waard <lachlan.00@gmail.com>
        --------------------------------------
-       Rhythmbox Ampache-FM
+       Rhythmbox AmpacheFM
        --------------------------------------
 
  This program is free software: you can redistribute it and/or modify
@@ -191,8 +191,10 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             return
         if int(self.nowtime - self.lasttime) > 10:
             if self.can_scrobble:
-                scrobble = Process(target=Scrobble.run, args=(self.nowtime, self.lasttitle, self.lastartist, self.lastalbum, self.lastMBtitle, self.lastMBartist, self.lastMBalbum, self.ampache_url, self.ampache_api))
-                scrobble.start()
+                Process(target=Scrobble.run,
+                        args=(self.nowtime, self.lasttitle, self.lastartist, self.lastalbum,
+                              self.lastMBtitle, self.lastMBartist, self.lastMBalbum,
+                              self.ampache_url, self.ampache_api)).start()
             # Log track details in last.fm format
             # date	title	artist	album	m title	m artist	m album
             self.log_processing((str(self.nowtime) + '\t' + self.lasttitle +
