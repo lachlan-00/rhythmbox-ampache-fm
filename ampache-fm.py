@@ -87,6 +87,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         # ampache details
         self.ampache_url = None
         self.ampache_api = None
+        self.ampache_session = False
         self.can_scrobble = False
 
     def do_activate(self):
@@ -103,6 +104,8 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         self.playing_changed_id = self.player.connect('playing-changed',
                                                       self.playing_changed)
         self._check_configfile()
+        # set initial session value
+        self.ampache_session = self.conf.get(C, 'ampache_api')
 
     def do_deactivate(self):
         """ Deactivate the plugin """
@@ -118,6 +121,18 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         del self.queue
         del self.app
         del self.playing_changed_id
+
+    def ampache_auth(self):
+        """ ping ampache for auth key """
+        if self.can_scrobble:
+            ping = Scrobble.ping(self.ampache_url, self.ampache_session)
+            if ping:
+                return ping
+            auth = Scrobble.auth(self.ampache_url, self.ampache_session)
+            if auth:
+                return auth
+        return False
+            
 
     def playing_changed(self, shell_player, playing):
         """ When playback entry has changed, get the tags and compare """
@@ -191,10 +206,16 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             return
         if int(self.nowtime - self.lasttime) > 10:
             if self.can_scrobble:
-                Process(target=Scrobble.run,
-                        args=(self.nowtime, self.lasttitle, self.lastartist, self.lastalbum,
-                              self.lastMBtitle, self.lastMBartist, self.lastMBalbum,
-                              self.ampache_url, self.ampache_api)).start()
+                self.ampache_session = self.ampache_auth()
+                # expired session
+                if not self.ampache_session:
+                    self.ampache_session = self.ampache_api
+                    self.ampache_session = self.ampache_auth()
+                if self.ampache_session:
+                    Process(target=Scrobble.run,
+                            args=(self.nowtime, self.lasttitle, self.lastartist, self.lastalbum,
+                                  self.lastMBtitle, self.lastMBartist, self.lastMBalbum,
+                                  self.ampache_url, self.ampache_session)).start()
             # Log track details in last.fm format
             # date	title	artist	album	m title	m artist	m album
             self.log_processing((str(self.nowtime) + '\t' + self.lasttitle +
@@ -219,8 +240,8 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             datafile = open(self.configfile, 'w')
             self.conf.write(datafile)
             datafile.close()
-        else:
-            self.conf.read(self.configfile)
+        # read the conf file            
+        self.conf.read(self.configfile)
         return
 
     # Create the Configure window in the rhythmbox plugins menu

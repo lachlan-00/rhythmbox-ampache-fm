@@ -23,6 +23,8 @@
 import urllib.parse
 import urllib.request
 
+from xml.etree import ElementTree as ET
+
 def run(time, title, artist, album, MBtitle, MBartist, MBalbum, ampache_url, ampache_api):
     """ Request Ampache record your play """
     if not ampache_url and not ampache_api:
@@ -52,3 +54,43 @@ def run(time, title, artist, album, MBtitle, MBartist, MBalbum, ampache_url, amp
     # return false when you can't confirm scrobble
     return 'successfully scrobbled:' in ampache_response
 
+def auth(ampache_url, ampache_api):
+    """ Request Ampache handshake auth """
+    if not ampache_url and not ampache_api:
+        return False
+    if ping(ampache_url, ampache_api):
+        return ampache_api
+    print('Connecting to ' + ampache_url)
+    ampache_url = ampache_url + '/server/xml.server.php'
+    data = urllib.parse.urlencode({'action': 'handshake',
+                                   'auth': ampache_api})
+    full_url = ampache_url + '?' + data
+    result = urllib.request.urlopen(full_url)
+    ampache_response = result.read().decode('utf-8')
+    result.close()
+    tree = ET.parse(ampache_response)
+    root = tree.getroot()
+    for p in root.findall('.//root'):
+        if p.find('auth').text:
+            print("AUTH TOKEN FOUND %s" % (p.find('auth').text))
+            return p.find('auth').text
+    return False
+
+def ping(ampache_url, ampache_api):
+    """ Request Ampache ping auth """
+    if not ampache_url and not ampache_api:
+        return False
+    ampache_url = ampache_url + '/server/xml.server.php'
+    data = urllib.parse.urlencode({'action': 'ping',
+                                   'auth': ampache_api})
+    full_url = ampache_url + '?' + data
+    result = urllib.request.urlopen(full_url)
+    ampache_response = result.read().decode('utf-8')
+    result.close()
+    tree = ET.parse(ampache_response)
+    root = tree.getroot()
+    for p in root.findall('.//root'):
+        if p.find('auth').text:
+            print("AUTH TOKEN FOUND %s" % (p.find('auth').text))
+            return p.find('auth').text
+    return False
