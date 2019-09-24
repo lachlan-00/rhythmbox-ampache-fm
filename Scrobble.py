@@ -29,7 +29,7 @@ def run(time, title, artist, album, MBtitle, MBartist, MBalbum, ampache_url, amp
     """ Request Ampache record your play """
     if not ampache_url and not ampache_api:
         return False
-    print('Scrobbling to ' + ampache_url)
+    print('Scrobbling to ' + ampache_url + '\nusing auth key: ' + ampache_api)
     ampache_url = ampache_url + '/server/xml.server.php'
     data = urllib.parse.urlencode({'action': 'scrobble',
                                    'auth': ampache_api,
@@ -44,15 +44,19 @@ def run(time, title, artist, album, MBtitle, MBartist, MBalbum, ampache_url, amp
     full_url = ampache_url + '?' + data
     result = urllib.request.urlopen(full_url)
     ampache_response = result.read().decode('utf-8')
-    result.close()
-    if ('successfully scrobbled:' in ampache_response):
+    tree = ET.fromstring(ampache_response)
+    try:
+        token = tree.find('success').text
+    except AttributeError:
+        token = False
+    if token:
             print('\nSuccessfully scrobbled track:\n' +
                   'time:   ' + str(time) + '\n' +
                   'title:  ' + str(title) + '\n' +
                   'artist: ' + str(artist) + '\n' +
                   'album:  ' + str(album))
     # return false when you can't confirm scrobble
-    return 'successfully scrobbled:' in ampache_response
+    return token
 
 def auth(ampache_url, ampache_api):
     """ Request Ampache handshake auth """

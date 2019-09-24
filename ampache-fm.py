@@ -88,7 +88,6 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         # ampache details
         self.ampache_url = None
         self.ampache_user = None
-        self.ampache_api = None
         self.ampache_session = False
         self.can_scrobble = False
 
@@ -107,7 +106,9 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
                                                       self.playing_changed)
         self._check_configfile()
         # set initial session value
-        self.ampache_auth()
+        self.ampache_user = self.conf.get(C, 'ampache_user')
+        self.ampache_url = self.conf.get(C, 'ampache_url')
+        self.ampache_auth(self.encrypt_string(self.conf.get(C, 'ampache_api')))
 
     def do_deactivate(self):
         """ Deactivate the plugin """
@@ -133,20 +134,18 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         sha_signature = hashlib.sha256(passphrase.encode()).hexdigest()
         return sha_signature
 
-    def ampache_auth(self):
+    def ampache_auth(self, key):
         """ ping ampache for auth key """
-        self.ampache_user = self.conf.get(C, 'ampache_user')
-        self.ampache_session = self.encrypt_string(self.conf.get(C, 'ampache_api'))
-        self.ampache_url = self.conf.get(C, 'ampache_url')
         if self.ampache_url[:8] == 'https://' or self.ampache_url[:7] == 'http://':
                 self.can_scrobble = True
-        if self.can_scrobble:
-            ping = Scrobble.ping(self.ampache_url, self.ampache_session)
-            if ping:
-                return ping
-            auth = Scrobble.auth(self.ampache_url, self.ampache_session)
-            if auth:
-                return auth
+                ping = Scrobble.ping(self.ampache_url, key)
+                if not ping == False:
+                    self.ampache_session = ping
+                    return ping
+                auth = Scrobble.auth(self.ampache_url, key)
+                if not auth == False:
+                    self.ampache_session = auth
+                    return auth
         return False
             
 
@@ -162,14 +161,6 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         self.nowtime = int(time.time())
         
         if entry:
-            # Get Ampache details
-            self.conf.read(self.configfile)
-            self.ampache_url = self.conf.get(C, 'ampache_url').rstrip('/')
-            self.ampache_user = self.conf.get(C, 'ampache_user')
-            self.ampache_api = self.encrypt_string(self.conf.get(C, 'ampache_api'), self.ampache_user)
-            if self.ampache_url[:8] == 'https://' or self.ampache_url[:7] == 'http://':
-                self.can_scrobble = True
-
             # Get name/string tags
             self.nowtitle = entry.get_string(RB.RhythmDBPropType.TITLE)
             self.nowartist = entry.get_string(RB.RhythmDBPropType.ARTIST)
@@ -223,16 +214,11 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             return
         if int(self.nowtime - self.lasttime) > 10:
             if self.can_scrobble:
-                self.ampache_session = self.ampache_auth()
-                # expired session
-                if not self.ampache_session:
-                    self.ampache_session = self.ampache_api
-                    self.ampache_session = self.ampache_auth()
-                if self.ampache_session:
-                    Process(target=Scrobble.run,
-                            args=(self.nowtime, self.lasttitle, self.lastartist, self.lastalbum,
-                                  self.lastMBtitle, self.lastMBartist, self.lastMBalbum,
-                                  self.ampache_url, self.ampache_session)).start()
+                self.ampache_auth(self.ampache_session)
+                Process(target=Scrobble.run,
+                        args=(self.nowtime, self.lasttitle, self.lastartist, self.lastalbum,
+                              self.lastMBtitle, self.lastMBartist, self.lastMBalbum,
+                              self.ampache_url, self.ampache_session)).start()
             # Log track details in last.fm format
             # date	title	artist	album	m title	m artist	m album
             self.log_processing((str(self.nowtime) + '\t' + self.lasttitle +
