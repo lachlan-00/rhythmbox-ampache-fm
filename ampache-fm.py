@@ -87,6 +87,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
 
         # ampache details
         self.ampache_url = None
+        self.ampache_user = None
         self.ampache_api = None
         self.ampache_session = False
         self.can_scrobble = False
@@ -106,7 +107,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
                                                       self.playing_changed)
         self._check_configfile()
         # set initial session value
-        self.ampache_session = self.encrypt_string(self.conf.get(C, 'ampache_api'))
+        self.ampache_auth()
 
     def do_deactivate(self):
         """ Deactivate the plugin """
@@ -124,13 +125,21 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         del self.playing_changed_id
 
     def encrypt_string(self, hash_string):
-        if self.conf.get(C, 'ampache_4') == 'False':
+        user = self.ampache_user
+        key = hashlib.sha256(hash_string.encode()).hexdigest()
+        if not user:
             return hash_string
-        sha_signature = hashlib.sha256(hash_string.encode()).hexdigest()
+        passphrase = user + key
+        sha_signature = hashlib.sha256(passphrase.encode()).hexdigest()
         return sha_signature
 
     def ampache_auth(self):
         """ ping ampache for auth key """
+        self.ampache_user = self.conf.get(C, 'ampache_user')
+        self.ampache_session = self.encrypt_string(self.conf.get(C, 'ampache_api'))
+        self.ampache_url = self.conf.get(C, 'ampache_url')
+        if self.ampache_url[:8] == 'https://' or self.ampache_url[:7] == 'http://':
+                self.can_scrobble = True
         if self.can_scrobble:
             ping = Scrobble.ping(self.ampache_url, self.ampache_session)
             if ping:
@@ -156,7 +165,8 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             # Get Ampache details
             self.conf.read(self.configfile)
             self.ampache_url = self.conf.get(C, 'ampache_url').rstrip('/')
-            self.ampache_api = self.encrypt_string(self.conf.get(C, 'ampache_api'))
+            self.ampache_user = self.conf.get(C, 'ampache_user')
+            self.ampache_api = self.encrypt_string(self.conf.get(C, 'ampache_api'), self.ampache_user)
             if self.ampache_url[:8] == 'https://' or self.ampache_url[:7] == 'http://':
                 self.can_scrobble = True
 
@@ -265,13 +275,12 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         build.get_object('savebutton').connect('clicked', lambda x:
                                                self.save_config(build))
         build.get_object('ampache_url').set_text(self.conf.get(C, 'ampache_url'))
+        build.get_object('ampache_user').set_text(self.conf.get(C, 'ampache_user'))
         build.get_object('ampache_api').set_text(self.conf.get(C, 'ampache_api'))
         build.get_object('log_path').set_text(self.conf.get(C, 'log_path'))
         build.get_object('log_limit').set_text(self.conf.get(C, 'log_limit'))
         if self.conf.get(C, 'log_rotate') == 'True':
             build.get_object('log_rotate').set_active(True)
-        if self.conf.get(C, 'ampache_4') == 'True':
-            build.get_object('ampache_4').set_active(True)
         window.show_all()
         return window
 
@@ -281,13 +290,10 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             self.conf.set(C, 'log_rotate', 'True')
         else:
             self.conf.set(C, 'log_rotate', 'False')
-        # ampache 4 hash token security on API key
-        if builder.get_object('ampache_4').get_active():
-            self.conf.set(C, 'ampache_4', 'True')
-        else:
-            self.conf.set(C, 'ampache_4', 'False')
         self.conf.set(C, 'ampache_url',
                       builder.get_object('ampache_url').get_text())
+        self.conf.set(C, 'ampache_user',
+                      builder.get_object('ampache_user').get_text())
         self.conf.set(C, 'ampache_api',
                       builder.get_object('ampache_api').get_text())
         self.conf.set(C, 'log_path',

@@ -1,5 +1,6 @@
 [conf]
 ampache_url = 
+ampache_user = 
 ampache_api = 
 log_path = 
 log_rotate = True

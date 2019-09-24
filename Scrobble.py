@@ -68,13 +68,14 @@ def auth(ampache_url, ampache_api):
     result = urllib.request.urlopen(full_url)
     ampache_response = result.read().decode('utf-8')
     result.close()
-    tree = ET.parse(ampache_response)
-    root = tree.getroot()
-    for p in root.findall('.//root'):
-        if p.find('auth').text:
-            print("AUTH TOKEN FOUND %s" % (p.find('auth').text))
-            return p.find('auth').text
-    return False
+    tree = ET.fromstring(ampache_response)
+    try:
+        token = tree.find('auth').text
+    except AttributeError:
+        token = False
+    if token:
+        print("AUTH TOKEN FOUND %s" % (token))
+    return token
 
 def ping(ampache_url, ampache_api):
     """ Request Ampache ping auth """
@@ -87,10 +88,12 @@ def ping(ampache_url, ampache_api):
     result = urllib.request.urlopen(full_url)
     ampache_response = result.read().decode('utf-8')
     result.close()
-    tree = ET.parse(ampache_response)
-    root = tree.getroot()
-    for p in root.findall('.//root'):
-        if p.find('auth').text:
-            print("AUTH TOKEN FOUND %s" % (p.find('auth').text))
-            return p.find('auth').text
-    return False
+    tree = ET.fromstring(ampache_response)
+    try:
+        token = tree.find('auth').text
+    except AttributeError:
+        token = False
+    if token:
+        print("AUTH TOKEN FOUND %s" % (token))
+    return token
+

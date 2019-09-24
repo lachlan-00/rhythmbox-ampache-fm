@@ -9,6 +9,7 @@ install-req:
 	# Copy files, forcefully
 	cp $(PLUGINFILE) $(INSTALLPATH) -f
 	cp ampache-fm.py $(INSTALLPATH) -f
+	cp Scrobble.py $(INSTALLPATH) -f
 	cp config.ui $(INSTALLPATH) -f
 	cp afm.conf.template $(INSTALLPATH) -f
 	cp README.md $(INSTALLPATH) -f
