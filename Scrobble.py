@@ -50,11 +50,14 @@ def run(time, title, artist, album, MBtitle, MBartist, MBalbum, ampache_url, amp
     except AttributeError:
         token = False
     if token:
-            print('\nSuccessfully scrobbled track:\n' +
-                  'time:   ' + str(time) + '\n' +
-                  'title:  ' + str(title) + '\n' +
-                  'artist: ' + str(artist) + '\n' +
-                  'album:  ' + str(album))
+        print(token)
+        return token
+    try:
+        token = tree.find('error').text
+    except AttributeError:
+        token = False
+    if token:
+        print(token)
     # return false when you can't confirm scrobble
     return token
 

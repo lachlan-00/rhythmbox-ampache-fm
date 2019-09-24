@@ -142,7 +142,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
                 if not ping == False:
                     self.ampache_session = ping
                     return ping
-                auth = Scrobble.auth(self.ampache_url, key)
+                auth = Scrobble.auth(self.ampache_url, self.encrypt_string(self.conf.get(C, 'ampache_api')))
                 if not auth == False:
                     self.ampache_session = auth
                     return auth
