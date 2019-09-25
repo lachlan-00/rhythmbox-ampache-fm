@@ -12,12 +12,15 @@ def check():
         import codecs
         import configparser
         import gi
+        import hashlib
         import os
         import shutil
         import time
         import threading
         import urllib.parse
         import urllib.request
+
+        import Scrobble
 
         gi.require_version('Peas', '1.0')
         gi.require_version('PeasGtk', '1.0')
