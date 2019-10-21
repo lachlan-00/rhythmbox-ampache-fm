@@ -29,7 +29,7 @@ import shutil
 import time
 import threading
 
-import Scrobble
+import ampache
 
 gi.require_version('Peas', '1.0')
 gi.require_version('PeasGtk', '1.0')
@@ -108,7 +108,10 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         # set initial session value
         self.ampache_user = self.conf.get(C, 'ampache_user')
         self.ampache_url = self.conf.get(C, 'ampache_url')
-        self.ampache_auth(self.encrypt_string(self.conf.get(C, 'ampache_api')))
+        # Get a session
+        self.ampache_session = ampache.handshake(self.ampache_url, self.encrypt_string(self.conf.get(C, 'ampache_api')))
+        # confirm the session
+        self.ampache_auth(self.ampache_session)
 
     def do_deactivate(self):
         """ Deactivate the plugin """
@@ -138,13 +141,15 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         """ ping ampache for auth key """
         if self.ampache_url[:8] == 'https://' or self.ampache_url[:7] == 'http://':
                 self.can_scrobble = True
-                ping = Scrobble.ping(self.ampache_url, key)
+                ping = ampache.ping(self.ampache_url, key)
                 if not ping == False:
                     self.ampache_session = ping
+                    print('ping returned')
                     return ping
-                auth = Scrobble.auth(self.ampache_url, self.encrypt_string(self.conf.get(C, 'ampache_api')))
+                auth = ampache.handshake(self.ampache_url, self.encrypt_string(self.conf.get(C, 'ampache_api')))
                 if not auth == False:
                     self.ampache_session = auth
+                    print('handshake returned')
                     return auth
         return False
             
@@ -212,13 +217,13 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         """ Wait a small amount of time to allow for skipping """
         if not self.nowtime or not self.lasttime:
             return
-        if int(self.nowtime - self.lasttime) > 10:
+        if int(self.nowtime - self.lasttime) >= 9:
             if self.can_scrobble:
                 self.ampache_auth(self.ampache_session)
-                Process(target=Scrobble.run,
-                        args=(self.nowtime, self.lasttitle, self.lastartist, self.lastalbum,
-                              self.lastMBtitle, self.lastMBartist, self.lastMBalbum,
-                              self.ampache_url, self.ampache_session)).start()
+                print('Sending scrobble to Ampache')
+                Process(target=ampache.scrobble,
+                        args=(self.ampache_url, self.ampache_session, self.lasttitle, self.lastartist, self.lastalbum,
+                              self.lastMBtitle, self.lastMBartist, self.lastMBalbum, self.nowtime)).start()
             # Log track details in last.fm format
             # date	title	artist	album	m title	m artist	m album
             self.log_processing((str(self.nowtime) + '\t' + self.lasttitle +

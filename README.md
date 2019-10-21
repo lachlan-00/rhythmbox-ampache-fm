@@ -52,8 +52,11 @@ python3 -c "import depends_test; depends_test.check()"
 
 ## USAGE & FEATURES
 
+Direct scrobbling made possible by the python3-ampache library!
+[<https://github.com/lachlan-00/python3-ampache>]
+
 I currently use this plugin in conjunction with my ampache scripts
-[https://github.com/lachlan-00/ampache-scripts]
+[<https://github.com/lachlan-00/ampache-scripts>]
 
 Using my generated cache file i import directly into my Ampache database
 allowing me to maintain a single point of truth for my playback data.
@@ -71,4 +74,4 @@ Play music in rhythmbox and then sync with your database.
 
 ## HOMEPAGE
 
-[https://github.com/lachlan-00/ampache-fm]
+[<https://github.com/lachlan-00/ampache-fm>]

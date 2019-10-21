@@ -20,7 +20,7 @@ def check():
         import urllib.parse
         import urllib.request
 
-        import Scrobble
+        import ampache
 
         gi.require_version('Peas', '1.0')
         gi.require_version('PeasGtk', '1.0')

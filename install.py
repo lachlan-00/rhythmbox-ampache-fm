@@ -19,7 +19,7 @@ INSTALLFILES = ['AUTHORS',
                 'ampache-fm.plugin',
                 'config.ui',
                 'ampache-fm.py',
-                'Scrobble.py']
+                'ampache.py']
 
 # The depends test will check for required modules
 if depends_test.check():
