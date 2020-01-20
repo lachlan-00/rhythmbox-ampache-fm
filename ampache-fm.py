@@ -22,6 +22,7 @@
 
 import codecs
 import configparser
+import csv
 import gi
 import hashlib
 import os
@@ -66,6 +67,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         self.queue = None
         self.app = None
         self.playing_changed_id = None
+        self.spinner = None
 
         # fields for current track
         self.nowtime = None
@@ -116,6 +118,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
     def do_deactivate(self):
         """ Deactivate the plugin """
         print('deactivating ampache-fm')
+        print(ampache.ping(self.ampache_url, self.ampache_session))
         self.nowtime = int(time.time())
         self.cache_writer()
         Gio.Application.get_default()
@@ -139,6 +142,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
 
     def ampache_auth(self, key):
         """ ping ampache for auth key """
+        self.ampache_url = self.conf.get(C, 'ampache_url')
         if self.ampache_url[:8] == 'https://' or self.ampache_url[:7] == 'http://':
                 self.can_scrobble = True
                 ping = ampache.ping(self.ampache_url, key)
@@ -265,6 +269,9 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
                                                 window.destroy())
         build.get_object('savebutton').connect('clicked', lambda x:
                                                self.save_config(build))
+        build.get_object('backfillbutton').connect('clicked', lambda x:
+                                               self.backfill())
+        self.spinner = build.get_object('backfillspinner')
         build.get_object('ampache_url').set_text(self.conf.get(C, 'ampache_url'))
         build.get_object('ampache_user').set_text(self.conf.get(C, 'ampache_user'))
         build.get_object('ampache_api').set_text(self.conf.get(C, 'ampache_api'))
@@ -329,11 +336,18 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         files.close()
         return
 
-    def backfill(self, dumpfile):
+    def backfill(self):
+        dumpfile = self.conf.get(C, 'log_path')
+        print(self.spinner.get_visible)
+        self.spinner.activate()
+        self.spinner.start()
+        print("Parsing cache file", dumpfile)
         if os.path.isfile(dumpfile):
             with open(dumpfile, 'r') as csvfile:
                 openfile = list(csv.reader(csvfile, delimiter='\t', ))
                 for row in openfile:
+                    while Gtk.events_pending():
+                        Gtk.main_iteration()
                     rowtrack = None
                     rowartist = None
                     rowalbum = None
@@ -385,11 +399,14 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
                             pass
                         # search ampache db for song
                         if not rowtrack == None and not rowartist == None and not rowalbum == None:
-                            ampache.ping(self.ampache_url, self.ampache_session)
+                            self.ampache_auth(self.ampache_session)
                             Process(target=ampache.scrobble,
                                     args=(self.ampache_url, self.ampache_session, str(rowtrack), str(rowartist), str(rowalbum),
                                           str(trackmbid).replace("None", ""), str(artistmbid).replace("None", ""), str(albummbid).replace("None", ""),
                                           str(row[0]))).start()
+        self.spinner.stop()
+        while Gtk.events_pending():
+            Gtk.main_iteration()
 
 class PythonSource(RB.Source):
     """ Register with rhythmbox """

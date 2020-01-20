@@ -11,6 +11,7 @@ def check():
     try:
         import codecs
         import configparser
+        import csv
         import gi
         import hashlib
         import os
