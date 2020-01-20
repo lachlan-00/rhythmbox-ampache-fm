@@ -329,6 +329,67 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         files.close()
         return
 
+    def backfill(self, dumpfile):
+        if os.path.isfile(dumpfile):
+            with open(dumpfile, 'r') as csvfile:
+                openfile = list(csv.reader(csvfile, delimiter='\t', ))
+                for row in openfile:
+                    rowtrack = None
+                    rowartist = None
+                    rowalbum = None
+                    trackmbid = None
+                    artistmbid = None
+                    albummbid = None
+                    try:
+                        test = row[0]
+                    except IndexError:
+                        test = None
+                    try:
+                        test2 = str(int(row[0]))
+                    except ValueError:
+                        test2 = None
+                        # print(row)
+                    except IndexError:
+                        test2 = None
+                        # print(row)
+                    if test and test2:
+                        # Normalise row data
+                        tmpdate = test2
+                        try:
+                            if not row[1] == '':
+                                rowtrack = row[1]
+                            if not row[2] == '':
+                                rowartist = row[2]
+                            if not row[3] == '':
+                                rowalbum = row[3]
+                        except IndexError:
+                            # missing rows in the tsv
+                            pass
+                        try:
+                            if not row[4] == '':
+                                trackmbid = row[4]
+                        except IndexError:
+                            # missing all the rows in the tsv
+                            pass
+                        try:
+                            if not row[5] == '':
+                                artistmbid = row[5]
+                        except IndexError:
+                            # missing all the rows in the tsv
+                            pass
+                        try:
+                            if not row[6] == '':
+                                albummbid = row[6]
+                        except IndexError:
+                            # missing all the rows in the tsv
+                            pass
+                        # search ampache db for song
+                        if not rowtrack == None and not rowartist == None and not rowalbum == None:
+                            ampache.ping(self.ampache_url, self.ampache_session)
+                            Process(target=ampache.scrobble,
+                                    args=(self.ampache_url, self.ampache_session, str(rowtrack), str(rowartist), str(rowalbum),
+                                          str(trackmbid).replace("None", ""), str(artistmbid).replace("None", ""), str(albummbid).replace("None", ""),
+                                          str(row[0]))).start()
 
 class PythonSource(RB.Source):
     """ Register with rhythmbox """
