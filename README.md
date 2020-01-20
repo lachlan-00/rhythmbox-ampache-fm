@@ -5,12 +5,9 @@ Alternatively you can also just cache to a local file.
 Replace last.fm with your homespun alternative or record playback
 which can be synced later to other places/devices.
 
-## Verson 2.0
+## Verson 1.0.0
 
-Everything is working the way it should be in a stable manner.
-I've been trying to break and find issues and work around
-anything that's come up.
-
+Now that the python ampache library is stable we are ready to release.
 Please enjoy breaking those last.fm chains!
 
 ## INSTALL
@@ -37,16 +34,15 @@ python3 -c "import depends_test; depends_test.check()"
 ## CONFIGURE
 
 * Ampache URL: The URL or your ampache server
-
 * Ampache API Key: Your API Key! (no username and password to keep it simple)
-
 * Cache Location: This can be a Directory or a full file path.
-   When using a directory the default filename is added (ampache-fm.txt)
-  * /home/user/ampache-fm.txt
+
+When using a directory the default filename is added (ampache-fm.txt)
+
+* Both of these path's will cache to the same location/file.
+  * /home/user/cache/ampache-fm.txt
   * /home/user/cache
-
 * Cache Size Limit (bytes): The size limit of your log file. (Default 10Mb)
-
 * Rotate Large files: Rename large files with the epoch time they are rotated
   * ampache-fm.txt -> ampache-fm1510722240.txt
 
