@@ -3,7 +3,7 @@
 """ Copyright (C)2019
 Lachlan de Waard <lachlan.00@gmail.com>
 ---------------------------------------
-Ampache XML-Api 400002 for python3
+Ampache XML-Api 400003 for python3
 ---------------------------------------
 
  This program is free software: you can redistribute it and/or modify
@@ -55,40 +55,6 @@ API FUNCTIONS
 -------------
 """
 
-""" ping
-    MINIMUM_API_VERSION=380001
-
-    This can be called without being authenticated, it is useful for determining if what the status
-    of the server is, and what version it is running/compatible with
-
-    INPUTS
-    * ampache_url = (string)
-    * ampache_api = (string)
-"""
-def ping(ampache_url, ampache_api):
-    """ Request Ampache ping auth """
-    ampache_url = ampache_url + '/server/xml.server.php'
-    data = urllib.parse.urlencode({'action': 'ping',
-                                   'auth': ampache_api})
-    full_url = ampache_url + '?' + data
-    try:
-        result = urllib.request.urlopen(full_url)
-    except urllib.error.URLError:
-        return False
-    except urllib.error.HTTPError:
-        return False
-    ampache_response = result.read()
-    result.close()
-    try:
-        tree = ET.fromstring(ampache_response)
-    except ET.ParseError:
-        return False
-    try:
-        tree.find('session_expire').text
-    except AttributeError:
-        return False
-    return ampache_api
-
 """ handshake
     MINIMUM_API_VERSION=380001
 
@@ -98,17 +64,26 @@ def ping(ampache_url, ampache_api):
     INPUTS
     * ampache_url = (string)
     * ampache_api = (string)
+    * user        = (string) //optional
     * timestamp   = (integer) UNIXTIME() //optional
     * version     = (string) //optional
 """
-def handshake(ampache_url, ampache_api, timestamp=0, version='400001'):
+def handshake(ampache_url, ampache_api, user=False, timestamp=False, version='400003'):
     if timestamp == 0:
         timestamp = int(time.time())
     ampache_url = ampache_url + '/server/xml.server.php'
-    data = urllib.parse.urlencode({'action': 'handshake',
-                                   'auth': ampache_api,
-                                   'timestamp': str(timestamp),
-                                   'version': version})
+    data = {'action': 'handshake',
+            'auth': ampache_api,
+            'user': user,
+            'timestamp': str(timestamp),
+            'version': version}
+    if not user:
+        data.pop('user')
+    if not timestamp:
+        data.pop('timestamp')
+    if not version:
+        data.pop('version')
+    data = urllib.parse.urlencode(data)
     full_url = ampache_url + '?' + data
     try:
         result = urllib.request.urlopen(full_url)
@@ -127,6 +102,43 @@ def handshake(ampache_url, ampache_api, timestamp=0, version='400001'):
     except AttributeError:
         token = False
     return token
+
+""" ping
+    MINIMUM_API_VERSION=380001
+
+    This can be called without being authenticated, it is useful for determining if what the status
+    of the server is, and what version it is running/compatible with
+
+    INPUTS
+    * ampache_url = (string)
+    * ampache_api = (string) session auth key //optional
+"""
+def ping(ampache_url, ampache_api):
+    """ Request Ampache ping auth """
+    ampache_url = ampache_url + '/server/xml.server.php'
+    data = {'action': 'ping',
+            'auth': ampache_api}
+    if not ampache_api:
+        data.pop('auth')
+    data = urllib.parse.urlencode(data)
+    full_url = ampache_url + '?' + data
+    try:
+        result = urllib.request.urlopen(full_url)
+    except urllib.error.URLError:
+        return False
+    except urllib.error.HTTPError:
+        return False
+    ampache_response = result.read().decode('utf-8')
+    result.close()
+    try:
+        tree = ET.fromstring(ampache_response)
+    except ET.ParseError:
+        return False
+    try:
+        tree.find('session_expire').text
+    except AttributeError:
+        return False
+    return ampache_api
 
 """ goodbye
     MINIMUM_API_VERSION=400001
@@ -167,38 +179,21 @@ def goodbye(ampache_url, ampache_api):
         token = False
     return token
 
-""" scrobble
-    MINIMUM_API_VERSION=400001
+""" url_to_song
+    MINIMUM_API_VERSION=380001
 
-    Search for a song using text info and then record a play if found.
-    This allows other sources to record play history to ampache
+    This takes a url and returns the song object in question
 
     INPUTS
     * ampache_url = (string)
     * ampache_api = (string)
-    * title       = (string)
-    * artist      = (string)
-    * album       = (string)
-    * MBtitle     = (string) //optional
-    * MBartist    = (string) //optional
-    * MBalbum     = (string) //optional
-    * time        = (integer) UNIXTIME() //optional
-    * client      = (string) //optional
+    * url         = (string) Full Ampache URL from server, translates back into a song XML
 """
-def scrobble(ampache_url, ampache_api, title, artist, album, MBtitle='', MBartist='', MBalbum='', time='', client = 'AmpacheAPI'):
-    if not ampache_url or not ampache_api or not title or not artist or not album:
-        return False
+def url_to_song(ampache_url, ampache_api, url):
     ampache_url = ampache_url + '/server/xml.server.php'
-    data = urllib.parse.urlencode({'action': 'scrobble',
+    data = urllib.parse.urlencode({'action': 'url_to_song',
                                    'auth': ampache_api,
-                                   'client': client,
-                                   'date': str(time),
-                                   'song': title,
-                                   'album': album,
-                                   'artist': artist,
-                                   'songmbid': MBtitle,
-                                   'albummbid': MBalbum,
-                                   'artistmdib': MBartist})
+                                   'url': url})
     full_url = ampache_url + '?' + data
     try:
         result = urllib.request.urlopen(full_url)
@@ -212,11 +207,11 @@ def scrobble(ampache_url, ampache_api, title, artist, album, MBtitle='', MBartis
     except ET.ParseError:
         return False
     try:
-        token = tree.find('success').text
+        token = tree.tag
     except AttributeError:
         token = False
     if token:
-        return token
+        return tree
     try:
         token = tree.find('error').text
     except AttributeError:
@@ -468,22 +463,22 @@ def artist_songs(ampache_url, ampache_api, filter, offset = 0, limit = 0):
     INPUTS
     * ampache_url = (string)
     * ampache_api = (string)
+    * filter      = //optional
     * exact       = //optional
     * add         = //optional
     * update      = //optional
-    * filter      = //optional
     * offset      = (integer) //optional
     * limit       = (integer) //optional
     * include     = //optional
 """
-def albums(ampache_url, ampache_api, exact = '', add = None, update = None, filter = '', offset = 0, limit = 0, include = None):
+def albums(ampache_url, ampache_api, filter = '', exact = '', add = None, update = None, offset = 0, limit = 0, include = None):
     ampache_url = ampache_url + '/server/xml.server.php'
     data = {'action': 'albums',
             'auth': ampache_api,
+            'filter': filter,
             'exact': exact,
             'add': add,
             'update': update,
-            'filter': filter,
             'offset': str(offset),
             'limit': str(limit),
             'include': include}
@@ -826,14 +821,14 @@ def tag_songs(ampache_url, ampache_api, filter, offset = 0, limit = 0):
     INPUTS
     * ampache_url = (string)
     * ampache_api = (string)
+    * filter      = //optional
     * exact       = //optional
     * add         = //optional
     * update      = //optional
-    * filter      = //optional
     * offset      = (integer) //optional
     * limit       = (integer) //optional
 """
-def songs(ampache_url, ampache_api, exact = '', add = '', update = '', filter = '', offset = 0, limit = 0):
+def songs(ampache_url, ampache_api, filter = '', exact = '', add = '', update = '', offset = 0, limit = 0):
     ampache_url = ampache_url + '/server/xml.server.php'
     data = urllib.parse.urlencode({'action': 'songs',
                                    'auth': ampache_api,
@@ -906,45 +901,6 @@ def song(ampache_url, ampache_api, filter):
         token = False
     return token
 
-""" url_to_song
-    MINIMUM_API_VERSION=380001
-
-    This takes a url and returns the song object in question
-
-    INPUTS
-    * ampache_url = (string)
-    * ampache_api = (string)
-    * url         = 
-"""
-def url_to_song(ampache_url, ampache_api, url):
-    ampache_url = ampache_url + '/server/xml.server.php'
-    data = urllib.parse.urlencode({'action': 'url_to_song',
-                                   'auth': ampache_api,
-                                   'url': url})
-    full_url = ampache_url + '?' + data
-    try:
-        result = urllib.request.urlopen(full_url)
-    except urllib.error.URLError:
-        return False
-    except urllib.error.HTTPError:
-        return False
-    ampache_response = result.read().decode('utf-8')
-    try:
-        tree = ET.fromstring(ampache_response)
-    except ET.ParseError:
-        return False
-    try:
-        token = tree.tag
-    except AttributeError:
-        token = False
-    if token:
-        return tree
-    try:
-        token = tree.find('error').text
-    except AttributeError:
-        token = False
-    return token
-
 """ playlists
     MINIMUM_API_VERSION=380001
 
@@ -953,12 +909,12 @@ def url_to_song(ampache_url, ampache_api, url):
     INPUTS
     * ampache_url = (string)
     * ampache_api = (string)
-    * exact       = //optional
     * filter      = //optional
+    * exact       = //optional
     * offset      = (integer) //optional
     * limit       = (integer) //optional
 """
-def playlists(ampache_url, ampache_api, exact = '', filter = '', offset = 0, limit = 0):
+def playlists(ampache_url, ampache_api, filter = '', exact = '', offset = 0, limit = 0):
     ampache_url = ampache_url + '/server/xml.server.php'
     data = urllib.parse.urlencode({'action': 'playlists',
                                    'auth': ampache_api,
@@ -1080,8 +1036,8 @@ def playlist_songs(ampache_url, ampache_api, filter, offset = 0, limit = 0):
     INPUTS
     * ampache_url = (string)
     * ampache_api = (string)
-    * name        = 
-    * type        = 
+    * name        = (string)
+    * type        = (string)
 """
 def playlist_create(ampache_url, ampache_api, name, type):
     ampache_url = ampache_url + '/server/xml.server.php'
@@ -1102,11 +1058,11 @@ def playlist_create(ampache_url, ampache_api, name, type):
     except ET.ParseError:
         return False
     try:
-        token = tree.find('success').text
+        token = tree.find('playlist').text
     except AttributeError:
         token = False
     if token:
-        return token
+        return tree
     try:
         token = tree.find('error').text
     except AttributeError:
@@ -1121,17 +1077,22 @@ def playlist_create(ampache_url, ampache_api, name, type):
     INPUTS
     * ampache_url = (string)
     * ampache_api = (string)
+    * filter      = (integer)
     * name        = 
     * type        = 
-    * filter      = 
 """
-def playlist_edit(ampache_url, ampache_api, name, type, filter):
+def playlist_edit(ampache_url, ampache_api, filter, name = False, type = False):
     ampache_url = ampache_url + '/server/xml.server.php'
-    data = urllib.parse.urlencode({'action': 'playlist_edit',
-                                   'auth': ampache_api,
-                                   'name': name,
-                                   'type': type,
-                                   'filter': filter})
+    data = {'action': 'playlist_edit',
+            'auth': ampache_api,
+            'filter': filter,
+            'name': name,
+            'type': type}
+    if not name:
+        data.pop('name')
+    if not type:
+        data.pop('type')
+    data = urllib.parse.urlencode(data)
     full_url = ampache_url + '?' + data
     try:
         result = urllib.request.urlopen(full_url)
@@ -1197,21 +1158,25 @@ def playlist_delete(ampache_url, ampache_api, filter):
 
 """ playlist_add_song
     MINIMUM_API_VERSION=380001
+    CHANGED_IN_API_VERSION=400003
 
-    This adds a song to a playlist
+    This adds a song to a playlist.
+    Added duplicate checks in 400003
 
     INPUTS
     * ampache_url = (string)
     * ampache_api = (string)
-    * song        = (integer) $song_id
     * filter      = (integer) $playlist_id
+    * song        = (integer) $song_id
+    * check       = (integer) 0|1 Check for duplicates (default = 0) //optional
 """
-def playlist_add_song(ampache_url, ampache_api, song, filter):
+def playlist_add_song(ampache_url, ampache_api, filter, song, check = 0):
     ampache_url = ampache_url + '/server/xml.server.php'
     data = urllib.parse.urlencode({'action': 'playlist_add_song',
                                    'auth': ampache_api,
                                    'song': song,
-                                   'filter': filter})
+                                   'filter': filter,
+                                   'check': check})
     full_url = ampache_url + '?' + data
     try:
         result = urllib.request.urlopen(full_url)
@@ -1254,7 +1219,6 @@ def playlist_remove_song(ampache_url, ampache_api, filter, song = False, track =
 
     data = {'action': 'playlist_remove_song',
             'auth': ampache_api,
-            'mode': mode,
             'filter': filter,
             'song': song,
             'track': track}
@@ -1518,13 +1482,13 @@ def advanced_search(ampache_url, ampache_api, rules, operator = 'and', type = 's
     INPUTS
     * ampache_url = (string)
     * ampache_api = (string)
-    * exact       = //optional
     * filter      = //optional
+    * exact       = //optional
     * offset      = (integer) //optional
     * limit       = (integer) //optional
 
 """
-def videos(ampache_url, ampache_api, exact = '', filter = '', offset = 0, limit = 0):
+def videos(ampache_url, ampache_api, filter = '', exact = '', offset = 0, limit = 0):
     ampache_url = ampache_url + '/server/xml.server.php'
     data = urllib.parse.urlencode({'action': 'videos',
                                    'auth': ampache_api,
@@ -2069,6 +2033,62 @@ def record_play(ampache_url, ampache_api, id, user, client = 'AmpacheAPI'):
         token = False
     return token
 
+""" scrobble
+    MINIMUM_API_VERSION=400001
+
+    Search for a song using text info and then record a play if found.
+    This allows other sources to record play history to ampache
+
+    INPUTS
+    * ampache_url = (string)
+    * ampache_api = (string)
+    * title       = (string)
+    * artist      = (string)
+    * album       = (string)
+    * MBtitle     = (string) //optional
+    * MBartist    = (string) //optional
+    * MBalbum     = (string) //optional
+    * time        = (integer) UNIXTIME() //optional
+    * client      = (string) //optional
+"""
+def scrobble(ampache_url, ampache_api, title, artist, album, MBtitle='', MBartist='', MBalbum='', time='', client = 'AmpacheAPI'):
+    if not ampache_url or not ampache_api or not title or not artist or not album:
+        return False
+    ampache_url = ampache_url + '/server/xml.server.php'
+    data = urllib.parse.urlencode({'action': 'scrobble',
+                                   'auth': ampache_api,
+                                   'client': client,
+                                   'date': str(time),
+                                   'song': title,
+                                   'album': album,
+                                   'artist': artist,
+                                   'songmbid': MBtitle,
+                                   'albummbid': MBalbum,
+                                   'artistmdib': MBartist})
+    full_url = ampache_url + '?' + data
+    try:
+        result = urllib.request.urlopen(full_url)
+    except urllib.error.URLError:
+        return False
+    except urllib.error.HTTPError:
+        return False
+    ampache_response = result.read().decode('utf-8')
+    try:
+        tree = ET.fromstring(ampache_response)
+    except ET.ParseError:
+        return False
+    try:
+        token = tree.find('success').text
+    except AttributeError:
+        token = False
+    if token:
+        return token
+    try:
+        token = tree.find('error').text
+    except AttributeError:
+        token = False
+    return token
+
 """ timeline
     MINIMUM_API_VERSION=380001
 
@@ -2360,7 +2380,7 @@ def stream(ampache_url, ampache_api, id, type, destination):
     * id          = (string) $song_id / $podcast_episode_id
     * type        = (string) 'song'|'podcast'
     * destination = (string) full file path
-    * format      = (string) 'mp3', 'ogg', etc. ('raw' / original by default)
+    * format      = (string) 'mp3', 'ogg', etc. ('raw' / original by default) //optional
 """
 def download(ampache_url, ampache_api, id, type, destination, format = 'raw'):
     if not os.path.isdir(os.path.dirname(destination)):
@@ -2474,7 +2494,7 @@ def user_create(ampache_url, ampache_api, username, password, email, fullname = 
 """
 def user_update(ampache_url, ampache_api, username, password = False, fullname = False, email = False, website = False, state = False, city = False, disable = False, maxbitrate = False):
     ampache_url = ampache_url + '/server/xml.server.php'
-    data = {'action': 'stats',
+    data = {'action': 'user_update',
             'auth': ampache_api,
             'username': username,
             'password': password,
@@ -2538,7 +2558,7 @@ def user_update(ampache_url, ampache_api, username, password = False, fullname =
 """
 def user_delete(ampache_url, ampache_api, username):
     ampache_url = ampache_url + '/server/xml.server.php'
-    data = {'action': 'stats',
+    data = {'action': 'user_delete',
             'auth': ampache_api,
             'username': username}
     data = urllib.parse.urlencode(data)
@@ -2565,3 +2585,19 @@ def user_delete(ampache_url, ampache_api, username):
     except AttributeError:
         token = False
     return token
+
+""" localplay
+    MINIMUM_API_VERSION=380001
+
+    NOT IMPLEMENTED
+"""
+def localplay(ampache_url, ampache_api, username):
+    return False
+
+""" democratic
+    MINIMUM_API_VERSION=380001
+
+    NOT IMPLEMENTED
+"""
+def democratic(ampache_url, ampache_api, username):
+    return False
