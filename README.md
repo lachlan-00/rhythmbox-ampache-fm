@@ -10,6 +10,9 @@ which can be synced later to other places/devices.
 Now that the python ampache library is stable we are ready to release.
 Please enjoy breaking those last.fm chains!
 
+There is an option to sync your cache file with Ampache in the plugin
+preferences page.
+
 ## INSTALL
 
 To install from the terminal using make:
@@ -51,22 +54,15 @@ When using a directory the default filename is added (ampache-fm.txt)
 Direct scrobbling made possible by the python3-ampache library!
 [<https://github.com/lachlan-00/python3-ampache>]
 
-I currently use this plugin in conjunction with my ampache scripts
-[<https://github.com/lachlan-00/ampache-scripts>]
+Did you lose internet and want to resync your play history?
 
-Using my generated cache file i import directly into my Ampache database
-allowing me to maintain a single point of truth for my playback data.
+In the plugin preferences select "Backfill From Cache File".
 
-Using this plugin I have been able to completely remove myself from last.fm
-and other external caching services keeping this information under my control.
+This will sync your current cache with the Ampache database that will
+allow you to maintain a single point of truth for my playback data.
 
-## COMMAND EXAMPLE
-
-Play music in rhythmbox and then sync with your database.
-
-``` shell
-./update_ampache_from_file.py /d:/home/user/ownCloud/ampache-fm.txt
-```
+Now you are able to completely remove yourself from external
+caching services keeping this information under **YOUR** control.
 
 ## HOMEPAGE
 
