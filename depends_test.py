@@ -14,7 +14,9 @@ def check():
         import csv
         import gi
         import hashlib
+        import json
         import os
+        import requests
         import shutil
         import time
         import threading

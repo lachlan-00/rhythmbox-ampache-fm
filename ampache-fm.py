@@ -28,7 +28,6 @@ import hashlib
 import os
 import shutil
 import time
-import threading
 
 import ampache
 
@@ -144,19 +143,18 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         """ ping ampache for auth key """
         self.ampache_url = self.conf.get(C, 'ampache_url')
         if self.ampache_url[:8] == 'https://' or self.ampache_url[:7] == 'http://':
-                self.can_scrobble = True
-                ping = ampache.ping(self.ampache_url, key)
-                if not ping == False:
-                    self.ampache_session = ping
-                    print('ping returned')
-                    return ping
-                auth = ampache.handshake(self.ampache_url, self.encrypt_string(self.conf.get(C, 'ampache_api')))
-                if not auth == False:
-                    self.ampache_session = auth
-                    print('handshake returned')
-                    return auth
+            self.can_scrobble = True
+            ping = ampache.ping(self.ampache_url, key)
+            if ping:
+                self.ampache_session = ping
+                print('ping returned')
+                return ping
+            auth = ampache.handshake(self.ampache_url, self.encrypt_string(self.conf.get(C, 'ampache_api')))
+            if auth:
+                self.ampache_session = auth
+                print('handshake returned')
+                return auth
         return False
-            
 
     def playing_changed(self, shell_player, playing):
         """ When playback entry has changed, get the tags and compare """
@@ -168,7 +166,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         if not self.lasttime:
             self.lasttime = int(time.time())
         self.nowtime = int(time.time())
-        
+
         if entry:
             # Get name/string tags
             self.nowtitle = entry.get_string(RB.RhythmDBPropType.TITLE)
@@ -270,7 +268,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         build.get_object('savebutton').connect('clicked', lambda x:
                                                self.save_config(build))
         build.get_object('backfillbutton').connect('clicked', lambda x:
-                                               self.backfill())
+                                                   self.backfill())
         self.spinner = build.get_object('backfillspinner')
         build.get_object('ampache_url').set_text(self.conf.get(C, 'ampache_url'))
         build.get_object('ampache_user').set_text(self.conf.get(C, 'ampache_user'))
@@ -398,18 +396,22 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
                             # missing all the rows in the tsv
                             pass
                         # search ampache db for song
-                        if not rowtrack == None and not rowartist == None and not rowalbum == None:
+                        if rowtrack and rowartist and rowalbum:
                             self.ampache_auth(self.ampache_session)
                             Process(target=ampache.scrobble,
-                                    args=(self.ampache_url, self.ampache_session, str(rowtrack), str(rowartist), str(rowalbum),
-                                          str(trackmbid).replace("None", ""), str(artistmbid).replace("None", ""), str(albummbid).replace("None", ""),
+                                    args=(self.ampache_url, self.ampache_session, str(rowtrack), str(rowartist),
+                                          str(rowalbum),
+                                          str(trackmbid).replace("None", ""), str(artistmbid).replace("None", ""),
+                                          str(albummbid).replace("None", ""),
                                           str(row[0]))).start()
         self.spinner.stop()
         while Gtk.events_pending():
             Gtk.main_iteration()
 
+
 class PythonSource(RB.Source):
     """ Register with rhythmbox """
+
     def __init__(self):
         RB.Source.__init__(self)
         GObject.type_register_dynamic(PythonSource)
