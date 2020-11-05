@@ -109,8 +109,9 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         # set initial session value
         self.ampache_user = self.conf.get(C, 'ampache_user')
         self.ampache_url = self.conf.get(C, 'ampache_url')
+        self.ampache_apikey = self.conf.get(C, 'ampache_api')
         # Get a session
-        self.ampache_session = ampache.handshake(self.ampache_url, self.encrypt_string(self.conf.get(C, 'ampache_api')))
+        self.ampache_session = ampache.handshake(self.ampache_url, ampache.encrypt_string(self.ampache_apikey, self.ampache_user))
         # confirm the session
         self.ampache_auth(self.ampache_session)
 
@@ -130,15 +131,6 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         del self.app
         del self.playing_changed_id
 
-    def encrypt_string(self, hash_string):
-        user = self.ampache_user
-        key = hashlib.sha256(hash_string.encode()).hexdigest()
-        if not user:
-            return hash_string
-        passphrase = user + key
-        sha_signature = hashlib.sha256(passphrase.encode()).hexdigest()
-        return sha_signature
-
     def ampache_auth(self, key):
         """ ping ampache for auth key """
         self.ampache_url = self.conf.get(C, 'ampache_url')
@@ -149,7 +141,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
                 self.ampache_session = ping
                 print('ping returned')
                 return ping
-            auth = ampache.handshake(self.ampache_url, self.encrypt_string(self.conf.get(C, 'ampache_api')))
+            auth = ampache.handshake(self.ampache_url, ampache.encrypt_string(self.ampache_apikey))
             if auth:
                 self.ampache_session = auth
                 print('handshake returned')
@@ -282,16 +274,16 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
 
     def save_config(self, builder):
         """ Save changes to the plugin config """
+        self.ampache_url = builder.get_object('ampache_url').get_text()
+        self.ampache_user = builder.get_object('ampache_user').get_text()
+        self.ampache_apikey = builder.get_object('ampache_api').get_text()
         if builder.get_object('log_rotate').get_active():
             self.conf.set(C, 'log_rotate', 'True')
         else:
             self.conf.set(C, 'log_rotate', 'False')
-        self.conf.set(C, 'ampache_url',
-                      builder.get_object('ampache_url').get_text())
-        self.conf.set(C, 'ampache_user',
-                      builder.get_object('ampache_user').get_text())
-        self.conf.set(C, 'ampache_api',
-                      builder.get_object('ampache_api').get_text())
+        self.conf.set(C, 'ampache_url', self.ampache_url)
+        self.conf.set(C, 'ampache_user', self.ampache_user)
+        self.conf.set(C, 'ampache_api', self.ampache_apikey)
         self.conf.set(C, 'log_path',
                       builder.get_object('log_path').get_text())
         self.conf.set(C, 'log_limit',
