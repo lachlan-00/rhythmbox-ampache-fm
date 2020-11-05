@@ -32,7 +32,10 @@ If you want to install manually, extract to the following directory:
 * $HOME/.local/share/rhythmbox/plugins/ampache-fm/
 
 You can test python dependencies by running:
+
+``` shell
 python3 -c "import depends_test; depends_test.check()"
+```
 
 ## CONFIGURE
 
@@ -52,7 +55,7 @@ When using a directory the default filename is added (ampache-fm.txt)
 ## USAGE & FEATURES
 
 Direct scrobbling made possible by the python3-ampache library!
-[<https://github.com/lachlan-00/python3-ampache>]
+[<https://github.com/ampache/python3-ampache>]
 
 Did you lose internet and want to resync your play history?
 

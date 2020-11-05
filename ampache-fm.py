@@ -65,7 +65,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         self.source = None
         self.queue = None
         self.app = None
-        self.playing_changed_id = None
+        self.elapsed_changed_id = None
         self.spinner = None
 
         # fields for current track
@@ -79,16 +79,11 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
 
         # Fields for the last saved track to check against
         self.lasttime = None
-        self.lasttitle = None
-        self.lastartist = None
-        self.lastalbum = None
-        self.lastMBtitle = None
-        self.lastMBartist = None
-        self.lastMBalbum = None
 
         # ampache details
         self.ampache_url = None
         self.ampache_user = None
+        self.ampache_apikey = None
         self.ampache_session = False
         self.can_scrobble = False
 
@@ -103,8 +98,8 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         self.source = RB.Shell.props.selected_page
         self.queue = RB.Shell.props.queue_source
         self.app = Gio.Application.get_default()
-        self.playing_changed_id = self.player.connect('playing-changed',
-                                                      self.playing_changed)
+        self.elapsed_changed_id = self.player.connect('elapsed-changed',
+                                                      self.elapsed_changed)
         self._check_configfile()
         # set initial session value
         self.ampache_user = self.conf.get(C, 'ampache_user')
@@ -112,8 +107,8 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         self.ampache_apikey = self.conf.get(C, 'ampache_api')
         # Get a session
         self.ampache_session = ampache.handshake(self.ampache_url, ampache.encrypt_string(self.ampache_apikey, self.ampache_user))
-        # confirm the session
-        self.ampache_auth(self.ampache_session)
+        if self.ampache_session:
+            self.can_scrobble = True
 
     def do_deactivate(self):
         """ Deactivate the plugin """
@@ -129,104 +124,67 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         del self.source
         del self.queue
         del self.app
-        del self.playing_changed_id
+        del self.elapsed_changed_id
 
     def ampache_auth(self, key):
         """ ping ampache for auth key """
+        self.ampache_user = self.conf.get(C, 'ampache_user')
         self.ampache_url = self.conf.get(C, 'ampache_url')
+        self.ampache_apikey = self.conf.get(C, 'ampache_api')
         if self.ampache_url[:8] == 'https://' or self.ampache_url[:7] == 'http://':
-            self.can_scrobble = True
             ping = ampache.ping(self.ampache_url, key)
             if ping:
                 self.ampache_session = ping
-                print('ping returned')
                 return ping
-            auth = ampache.handshake(self.ampache_url, ampache.encrypt_string(self.ampache_apikey))
+            auth = ampache.handshake(self.ampache_url, ampache.encrypt_string(self.ampache_apikey, self.ampache_user))
             if auth:
                 self.ampache_session = auth
-                print('handshake returned')
                 return auth
         return False
 
-    def playing_changed(self, shell_player, playing):
+    def elapsed_changed(self, shell_player, elapsed):
         """ When playback entry has changed, get the tags and compare """
         entry = shell_player.get_playing_entry()
 
-        if not playing:
+        if not elapsed:
             return None, None, None
 
-        if not self.lasttime:
-            self.lasttime = int(time.time())
-        self.nowtime = int(time.time())
-
         if entry:
-            # Get name/string tags
-            self.nowtitle = entry.get_string(RB.RhythmDBPropType.TITLE)
-            self.nowartist = entry.get_string(RB.RhythmDBPropType.ARTIST)
-            self.nowalbum = entry.get_string(RB.RhythmDBPropType.ALBUM)
-
-            # Get musicbrainz details
-            self.nowMBtitle = entry.get_string(RB.RhythmDBPropType.MB_TRACKID)
-            self.nowMBartist = entry.get_string(RB.RhythmDBPropType.MB_ARTISTID)
-            # Try album artist if artist is missing
-            if not self.nowMBartist:
-                self.nowMBartist = entry.get_string(RB.RhythmDBPropType.MB_ALBUMARTISTID)
-            self.nowMBalbum = entry.get_string(RB.RhythmDBPropType.MB_ALBUMID)
-
-            # Make initial last* fields the same
-            if not self.lasttitle or not self.lastartist or not self.lastalbum:
-                self.lasttitle = self.nowtitle
-                self.lastartist = self.nowartist
-                self.lastalbum = self.nowalbum
-                self.lastMBtitle = self.nowMBtitle
-                self.lastMBartist = self.nowMBartist
-                self.lastMBalbum = self.nowMBalbum
-            self.compare_track()
-
-    def compare_track(self):
-        """ Write changes when time and data is different """
-        if not self.nowtitle or not self.nowartist or not self.nowalbum:
-            # Playback not changed from None
-            return
-        # Playing song has changed
-        elif (self.nowtitle != self.lasttitle and
-              self.nowartist != self.lastartist and
-              self.nowalbum != self.lastalbum):
-
-            # Check time and write lines
-            self.cache_writer()
-
-            # Reset last*  after each change to catch the song that has finished
-            self.lasttitle = self.nowtitle
-            self.lastartist = self.nowartist
-            self.lastalbum = self.nowalbum
-            self.lastMBtitle = self.nowMBtitle
-            self.lastMBartist = self.nowMBartist
-            self.lastMBalbum = self.nowMBalbum
-            # Reset the timer after each song change
-            self.lasttime = self.nowtime
-        return
-
-    def cache_writer(self):
-        """ Wait a small amount of time to allow for skipping """
-        if not self.nowtime or not self.lasttime:
-            return
-        if int(self.nowtime - self.lasttime) >= 9:
-            if self.can_scrobble:
+            self.nowtime = int(time.time())
+            songlength = shell_player.get_playing_song_duration()
+            if (songlength > 30 and elapsed == 30) or (songlength <= 30 and (songlength - 4) == elapsed):
+                # check your session
                 self.ampache_auth(self.ampache_session)
-                print('Sending scrobble to Ampache')
-                Process(target=ampache.scrobble,
-                        args=(self.ampache_url, self.ampache_session, self.lasttitle, self.lastartist, self.lastalbum,
-                              self.lastMBtitle, self.lastMBartist, self.lastMBalbum, self.nowtime)).start()
-            # Log track details in last.fm format
-            # date	title	artist	album	m title	m artist	m album
-            self.log_processing((str(self.nowtime) + '\t' + self.lasttitle +
-                                 '\t' + self.lastartist + '\t' +
-                                 self.lastalbum + '\t' + self.lastMBtitle +
-                                 '\t' + self.lastMBartist +
-                                 '\t' + self.lastMBalbum))
-        else:
-            print(str(int(self.nowtime - self.lasttime)) + ' seconds is too quick to log')
+                # Get name/string tags
+                self.nowtitle = entry.get_string(RB.RhythmDBPropType.TITLE)
+                self.nowartist = entry.get_string(RB.RhythmDBPropType.ARTIST)
+                self.nowalbum = entry.get_string(RB.RhythmDBPropType.ALBUM)
+
+                # Get musicbrainz details
+                self.nowMBtitle = entry.get_string(RB.RhythmDBPropType.MB_TRACKID)
+                self.nowMBartist = entry.get_string(RB.RhythmDBPropType.MB_ARTISTID)
+                # Try album artist if artist is missing
+                if not self.nowMBartist:
+                    self.nowMBartist = entry.get_string(RB.RhythmDBPropType.MB_ALBUMARTISTID)
+                self.nowMBalbum = entry.get_string(RB.RhythmDBPropType.MB_ALBUMID)
+
+                self.cache_now_playing()
+
+    def cache_now_playing(self):
+        """ Wait a small amount of time to allow for skipping """
+        if self.can_scrobble:
+            self.ampache_auth(self.ampache_session)
+            print('Sending scrobble to Ampache: ' + self.nowtitle)
+            Process(target=ampache.scrobble,
+                    args=(self.ampache_url, self.ampache_session, self.nowtitle, self.nowartist, self.nowalbum,
+                          self.nowMBtitle, self.nowMBartist, self.nowMBalbum, self.nowtime, 'AmpacheFM Rhythmbox')).start()
+        # Log track details in last.fm format
+        # date	title	artist	album	m title	m artist	m album
+        self.log_processing((str(self.nowtime) + '\t' + self.nowtitle +
+                             '\t' + self.nowartist + '\t' +
+                             self.nowalbum + '\t' + self.nowMBtitle +
+                             '\t' + self.nowMBartist +
+                             '\t' + self.nowMBalbum))
 
     def _check_configfile(self):
         """ Copy the default config template or load existing config file """
@@ -358,7 +316,6 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
                         # print(row)
                     if test and test2:
                         # Normalise row data
-                        tmpdate = test2
                         try:
                             if not row[1] == '':
                                 rowtrack = row[1]
@@ -390,12 +347,13 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
                         # search ampache db for song
                         if rowtrack and rowartist and rowalbum:
                             self.ampache_auth(self.ampache_session)
+                            print('Sending scrobble to Ampache: ' + str(rowtrack))
                             Process(target=ampache.scrobble,
                                     args=(self.ampache_url, self.ampache_session, str(rowtrack), str(rowartist),
                                           str(rowalbum),
                                           str(trackmbid).replace("None", ""), str(artistmbid).replace("None", ""),
                                           str(albummbid).replace("None", ""),
-                                          str(row[0]))).start()
+                                          int(row[0]), 'AmpacheFM Rhythmbox')).start()
         self.spinner.stop()
         while Gtk.events_pending():
             Gtk.main_iteration()
