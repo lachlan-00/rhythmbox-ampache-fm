@@ -24,7 +24,6 @@ import codecs
 import configparser
 import csv
 import gi
-import hashlib
 import os
 import shutil
 import time
@@ -106,7 +105,8 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         self.ampache_url = self.conf.get(C, 'ampache_url')
         self.ampache_apikey = self.conf.get(C, 'ampache_api')
         # Get a session
-        self.ampache_session = ampache.handshake(self.ampache_url, ampache.encrypt_string(self.ampache_apikey, self.ampache_user))
+        self.ampache_session = ampache.handshake(self.ampache_url,
+                                                 ampache.encrypt_string(self.ampache_apikey, self.ampache_user))
         if self.ampache_session:
             self.can_scrobble = True
 
@@ -171,13 +171,14 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
                 self.cache_now_playing()
 
     def cache_now_playing(self):
-        """ Wait a small amount of time to allow for skipping """
+        """ Cache the track to file or to Ampache if you are able """
         if self.can_scrobble:
             self.ampache_auth(self.ampache_session)
             print('Sending scrobble to Ampache: ' + self.nowtitle)
             Process(target=ampache.scrobble,
                     args=(self.ampache_url, self.ampache_session, self.nowtitle, self.nowartist, self.nowalbum,
-                          self.nowMBtitle, self.nowMBartist, self.nowMBalbum, self.nowtime, 'AmpacheFM Rhythmbox')).start()
+                          self.nowMBtitle, self.nowMBartist, self.nowMBalbum,
+                          self.nowtime, 'AmpacheFM Rhythmbox')).start()
         # Log track details in last.fm format
         # date	title	artist	album	m title	m artist	m album
         self.log_processing((str(self.nowtime) + '\t' + self.nowtitle +
