@@ -5,13 +5,12 @@ Alternatively you can also just cache to a local file.
 Replace last.fm with your homespun alternative or record playback
 which can be synced later to other places/devices.
 
-## Verson 1.0.0
+## Verson 1.1.0
 
-Now that the python ampache library is stable we are ready to release.
-Please enjoy breaking those last.fm chains!
+Start using the elapsed time of the song instead of waiting
+for events that aren't easily tracked.
 
-There is an option to sync your cache file with Ampache in the plugin
-preferences page.
+Scrobble in a smarter way and let the server handle it!
 
 ## INSTALL
 
