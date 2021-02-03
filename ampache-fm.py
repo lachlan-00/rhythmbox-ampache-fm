@@ -115,7 +115,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         print('deactivating ampache-fm')
         print(ampache.ping(self.ampache_url, self.ampache_session))
         self.nowtime = int(time.time())
-        self.cache_writer()
+        self.cache_now_playing()
         Gio.Application.get_default()
         del self.shell
         del self.rbdb
