@@ -1,1 +1,3 @@
-ampache~=4.2.2
+requests
+configparser
+PyGObject

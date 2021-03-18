@@ -11,7 +11,6 @@ install-req:
 	cp ampache-fm.py $(INSTALLPATH) -f
 	cp ampache.py $(INSTALLPATH) -f
 	cp config.ui $(INSTALLPATH) -f
-	cp afm.conf.template $(INSTALLPATH) -f
 	cp README.md $(INSTALLPATH) -f
 	cp LICENSE $(INSTALLPATH) -f
 	cp AUTHORS $(INSTALLPATH) -f

@@ -41,7 +41,6 @@ from multiprocessing import Process
 
 PLUGIN_PATH = 'plugins/ampache-fm/'
 CONFIGFILE = 'afm.conf'
-CONFIGTEMPLATE = 'afm.conf.template'
 UIFILE = 'config.ui'
 C = 'conf'
 
@@ -53,6 +52,8 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
     def __init__(self):
         GObject.Object.__init__(self)
         RB.BrowserSource.__init__(self, name=_('ampache-fm'))
+        self.ampache = ampache.API()
+        self.ampache.set_format('json')
         self.plugin_info = 'ampache-fm'
         self.conf = configparser.RawConfigParser()
         self.configfile = RB.find_user_data_file(PLUGIN_PATH + CONFIGFILE)
@@ -83,8 +84,8 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         self.ampache_url = None
         self.ampache_user = None
         self.ampache_apikey = None
+        self.ampache_password = None
         self.ampache_session = False
-        self.can_scrobble = False
 
     def do_activate(self):
         """ Activate the plugin """
@@ -104,16 +105,13 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         self.ampache_user = self.conf.get(C, 'ampache_user')
         self.ampache_url = self.conf.get(C, 'ampache_url')
         self.ampache_apikey = self.conf.get(C, 'ampache_api')
+        self.ampache_password = self.conf.get(C, 'ampache_password')
         # Get a session
-        self.ampache_session = ampache.handshake(self.ampache_url,
-                                                 ampache.encrypt_string(self.ampache_apikey, self.ampache_user))
-        if self.ampache_session:
-            self.can_scrobble = True
+        self._check_session()
 
     def do_deactivate(self):
         """ Deactivate the plugin """
         print('deactivating ampache-fm')
-        print(ampache.ping(self.ampache_url, self.ampache_session))
         self.nowtime = int(time.time())
         self.cache_now_playing()
         Gio.Application.get_default()
@@ -131,13 +129,22 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         self.ampache_user = self.conf.get(C, 'ampache_user')
         self.ampache_url = self.conf.get(C, 'ampache_url')
         self.ampache_apikey = self.conf.get(C, 'ampache_api')
+        self.ampache_password = self.conf.get(C, 'ampache_password')
         if self.ampache_url[:8] == 'https://' or self.ampache_url[:7] == 'http://':
-            ping = ampache.ping(self.ampache_url, key)
-            if ping:
-                self.ampache_session = ping
-                return ping
-            auth = ampache.handshake(self.ampache_url, ampache.encrypt_string(self.ampache_apikey, self.ampache_user))
+            if key:
+                ping = self.ampache.ping(self.ampache_url, key)
+                if ping:
+                    # ping successful
+                    self.ampache_session = ping
+                    return ping
+            if self.ampache_password:
+                mytime = int(time.time())
+                passphrase = self.ampache.encrypt_password(self.ampache_password, mytime)
+                auth = self.ampache.handshake(self.ampache_url, passphrase, self.ampache_user, mytime)
+            else:
+                auth = self.ampache.handshake(self.ampache_url, self.ampache.encrypt_string(self.ampache_apikey, self.ampache_user))
             if auth:
+                print('handshake successful')
                 self.ampache_session = auth
                 return auth
         return False
@@ -153,8 +160,6 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             self.nowtime = int(time.time())
             songlength = shell_player.get_playing_song_duration()
             if (songlength > 30 and elapsed == 30) or (songlength <= 30 and (songlength - 4) == elapsed):
-                # check your session
-                self.ampache_auth(self.ampache_session)
                 # Get name/string tags
                 self.nowtitle = entry.get_string(RB.RhythmDBPropType.TITLE)
                 self.nowartist = entry.get_string(RB.RhythmDBPropType.ARTIST)
@@ -172,10 +177,9 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
 
     def cache_now_playing(self):
         """ Cache the track to file or to Ampache if you are able """
-        if self.can_scrobble:
-            self.ampache_auth(self.ampache_session)
+        if self._check_session():
             print('Sending scrobble to Ampache: ' + self.nowtitle)
-            Process(target=ampache.scrobble,
+            Process(target=self.ampache.scrobble,
                     args=(self.ampache_url, self.ampache_session, self.nowtitle, self.nowartist, self.nowalbum,
                           self.nowMBtitle, self.nowMBartist, self.nowMBalbum,
                           self.nowtime, 'AmpacheFM Rhythmbox')).start()
@@ -187,22 +191,36 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
                              '\t' + self.nowMBartist +
                              '\t' + self.nowMBalbum))
 
+    def _check_session(self):
+        return self.ampache_auth(self.ampache_session)
+
     def _check_configfile(self):
-        """ Copy the default config template or load existing config file """
+        """ Create the default config template or load existing config file """
         if not os.path.isfile(self.configfile):
-            template = RB.find_user_data_file(PLUGIN_PATH + CONFIGTEMPLATE)
             folder = os.path.split(self.configfile)[0]
             if not os.path.exists(folder):
                 os.makedirs(folder)
-            shutil.copyfile(template, self.configfile)
+            """ create a default config if not available """
+            conffile = open(self.configfile, "w")
+            conffile.write('[conf]\n' +
+                           'ampache_url = \n' +
+                           'ampache_user = \n' +
+                           'ampache_api = \n' +
+                           'ampache_password = \n' +
+                           'log_path = ' + os.path.join(RB.user_cache_dir(), 'ampache-fm.txt') + '\n' +
+                           'log_rotate = True \n' +
+                           'log_limit = 10760720')
+            conffile.close()
+        # read the conf file
+        self.conf.read(self.configfile)
+        # updated to add password support
+        if not self.conf.has_option(C, 'ampache_password'):
             # set default path for the user
-            self.conf.read(self.configfile)
-            self.conf.set(C, 'log_path', os.path.join(RB.user_cache_dir(), 'ampache-fm.txt'))
             datafile = open(self.configfile, 'w')
+            self.conf.set(C, 'ampache_password', '')
             self.conf.write(datafile)
             datafile.close()
-        # read the conf file            
-        self.conf.read(self.configfile)
+            self.conf.read(self.configfile)
         return
 
     # Create the Configure window in the rhythmbox plugins menu
@@ -224,6 +242,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         build.get_object('ampache_url').set_text(self.conf.get(C, 'ampache_url'))
         build.get_object('ampache_user').set_text(self.conf.get(C, 'ampache_user'))
         build.get_object('ampache_api').set_text(self.conf.get(C, 'ampache_api'))
+        build.get_object('ampache_password').set_text(self.conf.get(C, 'ampache_password'))
         build.get_object('log_path').set_text(self.conf.get(C, 'log_path'))
         build.get_object('log_limit').set_text(self.conf.get(C, 'log_limit'))
         if self.conf.get(C, 'log_rotate') == 'True':
@@ -236,6 +255,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         self.ampache_url = builder.get_object('ampache_url').get_text()
         self.ampache_user = builder.get_object('ampache_user').get_text()
         self.ampache_apikey = builder.get_object('ampache_api').get_text()
+        self.ampache_password = builder.get_object('ampache_password').get_text()
         if builder.get_object('log_rotate').get_active():
             self.conf.set(C, 'log_rotate', 'True')
         else:
@@ -243,6 +263,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         self.conf.set(C, 'ampache_url', self.ampache_url)
         self.conf.set(C, 'ampache_user', self.ampache_user)
         self.conf.set(C, 'ampache_api', self.ampache_apikey)
+        self.conf.set(C, 'ampache_password', self.ampache_password)
         self.conf.set(C, 'log_path',
                       builder.get_object('log_path').get_text())
         self.conf.set(C, 'log_limit',
@@ -347,14 +368,14 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
                             pass
                         # search ampache db for song
                         if rowtrack and rowartist and rowalbum:
-                            self.ampache_auth(self.ampache_session)
-                            print('Sending scrobble to Ampache: ' + str(rowtrack))
-                            Process(target=ampache.scrobble,
-                                    args=(self.ampache_url, self.ampache_session, str(rowtrack), str(rowartist),
-                                          str(rowalbum),
-                                          str(trackmbid).replace("None", ""), str(artistmbid).replace("None", ""),
-                                          str(albummbid).replace("None", ""),
-                                          int(row[0]), 'AmpacheFM Rhythmbox')).start()
+                            if self._check_session():
+                                print('Sending scrobble to Ampache: ' + str(rowtrack))
+                                Process(target=self.ampache.scrobble,
+                                        args=(self.ampache_url, self.ampache_session, str(rowtrack), str(rowartist),
+                                              str(rowalbum),
+                                              str(trackmbid).replace("None", ""), str(artistmbid).replace("None", ""),
+                                              str(albummbid).replace("None", ""),
+                                              int(row[0]), 'AmpacheFM Rhythmbox')).start()
         self.spinner.stop()
         while Gtk.events_pending():
             Gtk.main_iteration()

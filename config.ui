@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.36.0 -->
+<!-- Generated with glade 3.38.2 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkDialog" id="ampache-fm">
-    <property name="width_request">650</property>
-    <property name="can_focus">False</property>
-    <property name="border_width">5</property>
+    <property name="width-request">650</property>
+    <property name="can-focus">False</property>
+    <property name="border-width">5</property>
     <property name="title" translatable="yes">ampache-fm</property>
-    <property name="type_hint">dialog</property>
+    <property name="type-hint">dialog</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox1">
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
+        <property name="can-focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
           <object class="GtkButtonBox" id="dialog-action_area1">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="layout_style">end</property>
+            <property name="can-focus">False</property>
+            <property name="layout-style">end</property>
             <child>
               <object class="GtkButton" id="savebutton">
                 <property name="label">gtk-save</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
+                <property name="use-stock">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -37,9 +37,9 @@
               <object class="GtkButton" id="closebutton">
                 <property name="label">gtk-close</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
+                <property name="use-stock">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -51,16 +51,16 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="pack_type">end</property>
+            <property name="pack-type">end</property>
             <property name="position">0</property>
           </packing>
         </child>
         <child>
           <object class="GtkLabel" id="toplabel">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
+            <property name="can-focus">False</property>
             <property name="halign">center</property>
-            <property name="margin_bottom">7</property>
+            <property name="margin-bottom">7</property>
             <property name="label" translatable="yes">ampache-fm Preferences</property>
             <attributes>
               <attribute name="style" value="normal"/>
@@ -76,19 +76,19 @@
         <child>
           <object class="GtkBox" id="settingsbox">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
+            <property name="can-focus">False</property>
             <property name="orientation">vertical</property>
             <property name="spacing">5</property>
             <child>
               <object class="GtkBox">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <child>
                   <object class="GtkLabel">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
+                    <property name="can-focus">False</property>
                     <property name="label" translatable="yes">Ampache URL</property>
-                    <property name="width_chars">24</property>
+                    <property name="width-chars">24</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -100,8 +100,8 @@
                 <child>
                   <object class="GtkEntry" id="ampache_url">
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="invisible_char">●</property>
+                    <property name="can-focus">True</property>
+                    <property name="invisible-char">●</property>
                   </object>
                   <packing>
                     <property name="expand">True</property>
@@ -119,13 +119,13 @@
             <child>
               <object class="GtkBox">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <child>
                   <object class="GtkLabel">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
+                    <property name="can-focus">False</property>
                     <property name="label" translatable="yes">Ampache Username</property>
-                    <property name="width_chars">24</property>
+                    <property name="width-chars">24</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -137,8 +137,8 @@
                 <child>
                   <object class="GtkEntry" id="ampache_user">
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="invisible_char">●</property>
+                    <property name="can-focus">True</property>
+                    <property name="invisible-char">●</property>
                   </object>
                   <packing>
                     <property name="expand">True</property>
@@ -156,13 +156,13 @@
             <child>
               <object class="GtkBox">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <child>
                   <object class="GtkLabel">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
+                    <property name="can-focus">False</property>
                     <property name="label" translatable="yes">Ampache API Key</property>
-                    <property name="width_chars">24</property>
+                    <property name="width-chars">24</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -174,8 +174,10 @@
                 <child>
                   <object class="GtkEntry" id="ampache_api">
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="invisible_char">●</property>
+                    <property name="can-focus">True</property>
+                    <property name="visibility">False</property>
+                    <property name="invisible-char">●</property>
+                    <property name="input-purpose">password</property>
                   </object>
                   <packing>
                     <property name="expand">True</property>
@@ -193,13 +195,13 @@
             <child>
               <object class="GtkBox">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <child>
                   <object class="GtkLabel">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Cache Location</property>
-                    <property name="width_chars">24</property>
+                    <property name="can-focus">False</property>
+                    <property name="label" translatable="yes">Ampache Password</property>
+                    <property name="width-chars">24</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -209,10 +211,12 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkEntry" id="log_path">
+                  <object class="GtkEntry" id="ampache_password">
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="invisible_char">●</property>
+                    <property name="can-focus">True</property>
+                    <property name="visibility">False</property>
+                    <property name="invisible-char">●</property>
+                    <property name="input-purpose">password</property>
                   </object>
                   <packing>
                     <property name="expand">True</property>
@@ -230,13 +234,13 @@
             <child>
               <object class="GtkBox">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <child>
                   <object class="GtkLabel">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Backfill From Cache File</property>
-                    <property name="width_chars">24</property>
+                    <property name="can-focus">False</property>
+                    <property name="label" translatable="yes">Cache Location</property>
+                    <property name="width-chars">24</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -246,30 +250,15 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="backfillbutton">
-                    <property name="label">gtk-refresh</property>
+                  <object class="GtkEntry" id="log_path">
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="use_stock">True</property>
-                    <property name="always_show_image">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="invisible-char">●</property>
                   </object>
                   <packing>
-                    <property name="expand">False</property>
+                    <property name="expand">True</property>
                     <property name="fill">True</property>
                     <property name="position">1</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkSpinner" id="backfillspinner">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="padding">5</property>
-                    <property name="position">2</property>
                   </packing>
                 </child>
               </object>
@@ -282,13 +271,13 @@
             <child>
               <object class="GtkBox">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <child>
                   <object class="GtkLabel">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Cache Size Limit (bytes)</property>
-                    <property name="width_chars">24</property>
+                    <property name="can-focus">False</property>
+                    <property name="label" translatable="yes">Backfill From Cache File</property>
+                    <property name="width-chars">24</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -298,15 +287,30 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkEntry" id="log_limit">
+                  <object class="GtkButton" id="backfillbutton">
+                    <property name="label">gtk-refresh</property>
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="invisible_char">●</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">True</property>
+                    <property name="use-stock">True</property>
+                    <property name="always-show-image">True</property>
                   </object>
                   <packing>
-                    <property name="expand">True</property>
+                    <property name="expand">False</property>
                     <property name="fill">True</property>
                     <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSpinner" id="backfillspinner">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="padding">5</property>
+                    <property name="position">2</property>
                   </packing>
                 </child>
               </object>
@@ -319,12 +323,49 @@
             <child>
               <object class="GtkBox">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <child>
                   <object class="GtkLabel">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="width_chars">24</property>
+                    <property name="can-focus">False</property>
+                    <property name="label" translatable="yes">Cache Size Limit (bytes)</property>
+                    <property name="width-chars">24</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="padding">12</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="log_limit">
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="invisible-char">●</property>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">6</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="width-chars">24</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -337,10 +378,10 @@
                   <object class="GtkCheckButton" id="log_rotate">
                     <property name="label" translatable="yes">Rotate Large Cache files</property>
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="image_position">right</property>
-                    <property name="draw_indicator">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">False</property>
+                    <property name="image-position">right</property>
+                    <property name="draw-indicator">True</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -352,7 +393,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">6</property>
+                <property name="position">7</property>
               </packing>
             </child>
           </object>
@@ -368,8 +409,5 @@
       <action-widget response="0">savebutton</action-widget>
       <action-widget response="0">closebutton</action-widget>
     </action-widgets>
-    <child type="titlebar">
-      <placeholder/>
-    </child>
   </object>
 </interface>
