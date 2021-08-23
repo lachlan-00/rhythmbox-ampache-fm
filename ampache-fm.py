@@ -20,6 +20,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import ampache
 import codecs
 import configparser
 import csv
@@ -28,7 +29,6 @@ import os
 import shutil
 import time
 
-import ampache
 
 gi.require_version('Peas', '1.0')
 gi.require_version('PeasGtk', '1.0')
@@ -134,6 +134,10 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
             if key:
                 ping = self.ampache.ping(self.ampache_url, key)
                 if ping:
+                    if not self.ampache.AMPACHE_URL:
+                        self.ampache.AMPACHE_URL = self.ampache_url
+                    if not self.ampache.AMPACHE_SESSION:
+                        self.ampache.AMPACHE_SESSION = self.ampache_session
                     # ping successful
                     self.ampache_session = ping
                     return ping
@@ -145,6 +149,10 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
                 auth = self.ampache.handshake(self.ampache_url, self.ampache.encrypt_string(self.ampache_apikey, self.ampache_user))
             if auth:
                 print('handshake successful')
+                if not self.ampache.AMPACHE_URL:
+                    self.ampache.AMPACHE_URL = self.ampache_url
+                if not self.ampache.AMPACHE_SESSION:
+                    self.ampache.AMPACHE_SESSION = self.ampache_session
                 self.ampache_session = auth
                 return auth
         return False
@@ -180,7 +188,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         if self._check_session():
             print('Sending scrobble to Ampache: ' + self.nowtitle)
             Process(target=self.ampache.scrobble,
-                    args=(self.ampache_url, self.ampache_session, self.nowtitle, self.nowartist, self.nowalbum,
+                    args=(self.nowtitle, self.nowartist, self.nowalbum,
                           self.nowMBtitle, self.nowMBartist, self.nowMBalbum,
                           self.nowtime, 'AmpacheFM Rhythmbox')).start()
         # Log track details in last.fm format
@@ -371,7 +379,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
                             if self._check_session():
                                 print('Sending scrobble to Ampache: ' + str(rowtrack))
                                 Process(target=self.ampache.scrobble,
-                                        args=(self.ampache_url, self.ampache_session, str(rowtrack), str(rowartist),
+                                        args=(str(rowtrack), str(rowartist),
                                               str(rowalbum),
                                               str(trackmbid).replace("None", ""), str(artistmbid).replace("None", ""),
                                               str(albummbid).replace("None", ""),
