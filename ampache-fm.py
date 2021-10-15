@@ -113,7 +113,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
         """ Deactivate the plugin """
         print('deactivating ampache-fm')
         self.nowtime = int(time.time())
-        self.cache_now_playing()
+        # self.cache_now_playing()
         Gio.Application.get_default()
         del self.shell
         del self.rbdb
@@ -185,7 +185,7 @@ class AmpacheFm(GObject.Object, Peas.Activatable, PeasGtk.Configurable):
 
     def cache_now_playing(self):
         """ Cache the track to file or to Ampache if you are able """
-        if self._check_session():
+        if self._check_session() and self.nowtitle:
             print('Sending scrobble to Ampache: ' + self.nowtitle)
             Process(target=self.ampache.scrobble,
                     args=(self.nowtitle, self.nowartist, self.nowalbum,
